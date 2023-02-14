@@ -6,7 +6,7 @@ plt.rcParams.update({'font.size': 22})
 plt.interactive(True)
 
 # read data file
-tec=np.genfromtxt("tec.dat", dtype=None,comments="%")
+tec=np.genfromtxt("small_wave/tec.dat", dtype=None,comments="%")
 
 #text='VARIABLES = X Y P U V u2 v2 w2 uv mu_sgs prod'
 
@@ -65,7 +65,7 @@ k2d=np.transpose(k2d)
 
 
 # read k and eps from a 2D RANS simulations. They should be used for computing the damping function f
-k_eps_RANS = np.loadtxt("k_eps_RANS.dat")
+k_eps_RANS = np.loadtxt("small_wave/k_eps_RANS.dat")
 k_RANS=k_eps_RANS[:,0]
 diss_RANS=k_eps_RANS[:,1] 
 vist_RANS=k_eps_RANS[:,2] 
@@ -90,7 +90,7 @@ p2d[:,-1]=p2d[:,-1-1]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("xc_yc.dat")
+xc_yc = np.loadtxt("small_wave/xc_yc.dat")
 xf=xc_yc[:,0]
 yf=xc_yc[:,1]
 xf2d=np.reshape(xf,(nj,ni))
@@ -123,7 +123,7 @@ plt.quiver(x2d[::k,::k],y2d[::k,::k],u2d[::k,::k],v2d[::k,::k],width=0.01)
 plt.xlabel("$x$")
 plt.ylabel("$y$")
 plt.title("vector plot")
-plt.savefig('vect_python.eps')
+plt.savefig('plots/vect_python.jpg')
 
 ################################ contour plot
 fig1,ax1 = plt.subplots()
@@ -131,7 +131,7 @@ plt.subplots_adjust(left=0.20,bottom=0.20)
 plt.xlabel("$x$")
 plt.ylabel("$y$")
 plt.title("contour pressure plot")
-plt.savefig('piso_python.eps')
+plt.savefig('plots/piso_python.jpg')
 
 ################################ contour plot
 fig1,ax1 = plt.subplots()
@@ -140,7 +140,7 @@ plt.contourf(x2d,y2d,k_RANS_2d, 50)
 plt.xlabel("$x$")
 plt.ylabel("$y$")
 plt.title("contour k RANS plot")
-plt.savefig('k_rans.eps')
+plt.savefig('plots/k_rans.jpg')
 
 #************
 # plot uv
@@ -150,7 +150,7 @@ i=10
 plt.plot(uv2d[i,:],y2d[i,:],'b-')
 plt.xlabel('$\overline{u^\prime v^\prime}$')
 plt.ylabel('y/H')
-plt.savefig('uv_python.eps')
+plt.savefig('plots/uv_python.jpg')
 
 #%%%%%%%%%%%%%%%%%%%%% grid
 fig1,ax1 = plt.subplots()
@@ -163,7 +163,7 @@ for j in range (0,nj):
 
 #plt.axis([0,5,0,5])
 plt.title('grid')
-plt.savefig('grid_python.eps')
+plt.savefig('plots/grid_python.jpg')
 
 
 plt.show()
