@@ -5,17 +5,12 @@ from dphidx_dy import dphidx_dy
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR  # for building SVR model
-import plotly.graph_objects as go  # for data visualization
-import plotly.express as px  # for data visualization
-
-plt.rcParams.update({'font.size': 22})
-plt.interactive(True)
+import random
 
 # read data file
 tec=np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/tec.dat", dtype=None,comments="%")
 
 # text='VARIABLES = X Y P U V u2 v2 w2 uv mu_sgs prod'
-
 x = tec[:, 0]
 y = tec[:, 1]
 p = tec[:, 2]
@@ -106,6 +101,7 @@ yf2d = np.transpose(yf2d)
 # delete last row
 xf2d = np.delete(xf2d, -1, 0)
 yf2d = np.delete(yf2d, -1, 0)
+
 # delete last columns
 xf2d = np.delete(xf2d, -1, 1)
 yf2d = np.delete(yf2d, -1, 1)
@@ -119,6 +115,10 @@ dvdy = np.zeros((ni, nj))
 dudx, dudy = dphidx_dy(xf2d, yf2d, u2d)
 dvdx, dvdy = dphidx_dy(xf2d, yf2d, v2d)
 
+
+
+
+#Prepare data to fit model
 df = pd.read_csv('/Users/benjaminjonsson/Programmering/Kandidat/k_eps_RANS2.csv', encoding='utf-8', sep=';')
 
 k_rans = df['k'].to_numpy()
@@ -134,14 +134,39 @@ for i in range(len(e_rans)):
     if e_rans[i] == 0:
         indexDrop.append(i)
 
-E = np.delete(k_rans, indexDrop)
-K = np.delete(e_rans, indexDrop)
+E = np.delete(e_rans, indexDrop)
+K = np.delete(k_rans, indexDrop)
 NY = np.delete(ny_rans, indexDrop)
+UV = np.delete(uv, indexDrop)
+DUDY = np.delete(dudy,indexDrop)
+DVDX = np.delete(dvdx,indexDrop)
 
-cmy_rans = np.array((NY * E)/(K**2))
+omega = E/(K*0.09)
 
-#duidxj = np.array(np.sqrt(dudx**2 + dudy**2 + dvdx**2 + dvdy**2))
-duidxj = np.array(np.sqrt(dudx**2))
+#Compute C_my and ||duidxj|| to train model
+#Option 2 and 3 seem to work
+
+#1
+#cmy = -UV/(K*(DUDY + DVDX))*omega
+#cmy_rans = np.array(cmy)
+
+#2
+#cmy = NY*E/(K**2)
+#cmy_rans = np.array(cmy)
+
+#3
+cmy = NY*omega/K
+cmy_rans = np.array(cmy)
+
+#TEST WITH RANDOM NUMBERS IN REASONABLE RANGE -> ERROR WITH CODE IS CALCULATION OF C_my
+#cmy = []
+#n = len(E)
+#for x in range (0, n):
+#    cmy.append(random.uniform(0.9, 1.1))
+#cmy_rans = np.array(cmy)
+
+duidxj = np.array((dudy**2 + dudx**2 + dvdy**2 + dvdx**2)**0.5)
+#duidxj = np.array(0.5*(dudy + dudx + dvdy + dvdx))
 duidxj = np.delete(duidxj, indexDrop)
 
 #ML-metod
@@ -150,40 +175,99 @@ duidxj = duidxj.reshape(-1,1)
 scaler = MinMaxScaler()
 
 duidxj_scaled = []
-duidxj_scaled = scaler.fit_transform(duidxj[:])
+duidxj_scaled = scaler.fit_transform(duidxj)
 
-X = duidxj_scaled
+X = np.zeros((len(duidxj_scaled),1))
+X[:,0] = duidxj_scaled[:,0]
 Y = cmy_rans
 
-model = SVR(kernel = 'rbf', C = 1, epsilon = 10)
+model = SVR(kernel = 'rbf', C = 1, epsilon = 0.001)
+SVR = model.fit(X,Y.flatten())
 
-SVR = model.fit(X,Y)
-xrange = np.linspace(X.min(),X.max(),len(X))
+#TEST med nytt case
+#Prepare data for new case, same method as previously
+tec_large = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None,comments="%")
 
-y_svr = model.predict(xrange.reshape(-1,1))
+u_large = tec_large[:,3]
+v_large = tec_large[:,4]
+y_large = tec_large[:,1]
+x_large = tec_large[:,0]
+
+if max(y_large) == 1.:
+    ni = 170
+    nj = 194
+    nu = 1. / 10000.
+else:
+    nu = 1. / 10595.
+    if max(x_large) > 8.:
+        nj = 162
+        ni = 162
+    else:
+        ni = 402
+        nj = 162
+
+viscos = nu
+
+u2d_large = np.transpose(np.reshape(u_large, (nj, ni)))
+v2d_large = np.transpose(np.reshape(v_large, (nj, ni)))
+
+xc_yc_large = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/xc_yc_large.dat")
+xf_large = xc_yc[:, 0]
+yf_large = xc_yc[:, 1]
+xf2d_large = np.reshape(xf_large, (nj, ni))
+yf2d_large = np.reshape(yf_large, (nj, ni))
+xf2d_large = np.transpose(xf2d_large)
+yf2d_large = np.transpose(yf2d_large)
+
+#Delete last row
+xf2d_large = np.delete(xf2d_large, -1, 0)
+yf2d_large = np.delete(yf2d_large, -1, 0)
+
+#Delete last columns
+xf2d_large = np.delete(xf2d_large, -1, 1)
+yf2d_large = np.delete(yf2d_large, -1, 1)
+
+#Compute the gradient dudx, dudy at point P
+dudx_large = np.zeros((ni, nj))
+dudy_large = np.zeros((ni, nj))
+dvdx_large = np.zeros((ni, nj))
+dvdy_large = np.zeros((ni, nj))
+
+dudx_large, dudy_large = dphidx_dy(xf2d_large, yf2d_large, u2d_large)
+dvdx_large, dvdy_large = dphidx_dy(xf2d_large, yf2d_large, v2d_large)
+
+duidxj_test = np.array((dudy_large**2 + dudx_large**2 + dvdy_large**2 + dvdx_large**2)**0.5)
+#duidxj_test = np.array(0.5*(dudy_large + dudx_large + dvdy_large + dvdx_large))
+duidxj_test = np.delete(duidxj_test,indexDrop)
+duidxj_test = duidxj_test.reshape(-1,1)
+
+duidxj_test_scaled = scaler.fit_transform(duidxj_test)
+
+X_test = np.zeros((len(duidxj_test),1))
+X_test[:,0] = duidxj_test_scaled[:,0]
+
+y_svr = model.predict(X_test)
 y_svr_no_scale = scaler.inverse_transform(y_svr.reshape(-1,1))
 y_svr_no_scale = y_svr_no_scale.flatten()
 
+X_test_no_scale = scaler.inverse_transform(X_test)
+
+#Calculate error
+errorML = (np.std(y_svr - cmy_rans))/(np.mean(y_svr**2))**0.5
+error = (np.std(0.09 - cmy_rans))/(np.mean(0.09**2))**0.5
+errorOmega = (np.std(1-cmy_rans))/(np.mean((1)**2))**0.5
+
+#Print error
+print("RMS-felet med ML är", errorML)
+print("RMS-felet med standardmodell (C_my = 0.09) är", error)
+print("RMS-felet med standardmodell ,k-omega, (C_my = -1) är", errorOmega)
+
 #Plotta lösning
-plt.scatter(xrange,y_svr_no_scale)
-plt.savefig("bild.png")
-
-#TEST med nytt case
-k_eps_RANS = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/k_eps_RANS_large.dat")
-k_RANS_large = k_eps_RANS[:, 0]
-diss_RANS_large = k_eps_RANS[:, 1]
-ny_t_RANS_large = k_eps_RANS[:,2]
-
-k_RANS_large = np.delete(k_RANS_large,indexDrop)
-diss_RANS_large = np.delete(diss_RANS_large,indexDrop)
-ny_t_RANS_large = np.delete(ny_t_RANS_large,indexDrop)
-
-ny_t_predict = y_svr_no_scale*k_RANS_large**2/diss_RANS_large
-ny_t_standard = 0.09*k_RANS_large**2/diss_RANS_large
-
-errorML = (np.std(ny_t_predict - ny_t_RANS_large))/(np.mean(ny_t_predict**2))**0.5/(np.mean(ny_t_RANS_large**2))**0.5
-error = (np.std(ny_t_standard - ny_t_RANS_large))/(np.mean(ny_t_standard**2))**0.5/(np.mean(ny_t_RANS_large**2))**0.5
-print("Felet med ML är", errorML)
-print("Felet med standardmodell är", error)
-
-print(np.mean(y_svr_no_scale))
+plt.scatter(X_test_no_scale,cmy_rans,marker = "o", s = 10, c = "green",label = "Target")
+plt.scatter(X_test_no_scale,y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
+plt.legend(loc="lower right",prop=dict(size=12))
+plt.xlabel("$ || \partial u_i^+ / \partial x_j^+ ||$")
+plt.ylabel("$C^{k-\omega}_\mu$")
+plt.title("$C^{k-\omega}_\mu = f( ||\partial u_i^+/ \partial x_j^+||)$")
+plt.savefig("Modell1.png")
+plt.show()
