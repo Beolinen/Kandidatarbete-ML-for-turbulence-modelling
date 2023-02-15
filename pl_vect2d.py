@@ -20,7 +20,8 @@ uu = tec[:, 5]
 vv = tec[:, 6]
 ww = tec[:, 7]
 uv = tec[:, 8]
-k = 0.5 * (uu + vv + ww)
+eps_DNS = tec[:, 9]
+k_DNS = 0.5 * (uu + vv + ww)
 
 if max(y) == 1.:
     ni = 170
@@ -45,7 +46,7 @@ y2d = np.reshape(y, (nj, ni))
 uu2d = np.reshape(uu, (nj, ni))  # =mean{v'_1v'_1}
 uv2d = np.reshape(uv, (nj, ni))  # =mean{v'_1v'_2}
 vv2d = np.reshape(vv, (nj, ni))  # =mean{v'_2v'_2}
-k2d = np.reshape(k, (nj, ni))  # =mean{0.5(v'_iv'_i)}
+k2d = np.reshape(k_DNS, (nj, ni))  # =mean{0.5(v'_iv'_i)}
 
 u2d = np.transpose(u2d)
 v2d = np.transpose(v2d)
@@ -90,7 +91,7 @@ p2d[:, -1] = p2d[:, -1 - 1]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/xc_yc.dat")
+xc_yc = np.loadtxt("xc_yc.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj, ni))
