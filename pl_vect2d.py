@@ -2,7 +2,6 @@
 import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
-from dphidx_dy import dphidx_dy
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR  # for building SVR model
 from gradients import compute_face_phi,dphidx,dphidy,init
@@ -168,6 +167,7 @@ dvdy=dphidx(v2d_face_w,u2d_face_s,areawy,areasy,vol)
 #----------------------------------------------ML-Method Original Case----------------------------------------------
 omega = eps_DNS2d/k2d/0.09
 
+# np.maximum is used to avoid division by zero
 k2d=np.maximum(k2d,viscos*omega)
 
 #Compute C_my and ||duidxj|| to train model
@@ -181,6 +181,8 @@ cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
 duidxj = np.array((0.5*dudy**2 + dudx**2 + dvdy**2 + 0.5*dvdx**2)**0.5)
 
 #ML-metod
+# The MinMaxScaler works by first computing the minimum and maximum values of each feature in the training data. 
+# It then scales the values of each feature such that the minimum value is mapped to 0 and the maximum value is mapped to 1.
 scaler = MinMaxScaler()
 
 duidxj = duidxj.reshape(-1,1)
@@ -194,10 +196,11 @@ k_scaled = scaler.fit_transform(k_scaled)
 uv_scaled = uv2d.reshape(-1,1)
 uv_scaled = scaler.fit_transform(uv_scaled)
 
-
+#2 columns for 3D plot, 1 for 2D --> comment second column
 X = np.zeros((len(duidxj_scaled),2))
 X[:,0] = duidxj_scaled[:,0]
 
+#Choose model
 #X[:,1] = k_scaled[:,0]
 X[:,1] = uv_scaled[:,0]
 
@@ -206,7 +209,7 @@ Y = cmy_DNS
 model = SVR(kernel = 'rbf', C = 1, epsilon = 0.001)
 SVR = model.fit(X,Y.flatten())
 
-#----------------------------------------------Test with New Case----------------------------------------------
+#----------------------------------------------Test With New Case------------------------------------------------
 #----------------------------------------------Read Data Large Case----------------------------------------------
 tec_large = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None,comments="%")
 
@@ -341,20 +344,24 @@ dvdx_large=dphidx(v2d_face_w,u2d_face_s,areawx,areasx,vol)
 dudy_large=dphidx(u2d_face_w,u2d_face_s,areawy,areasy,vol)
 dvdy_large=dphidx(v2d_face_w,u2d_face_s,areawy,areasy,vol)
 
-
 #----------------------------------------------ML-Method Large Case----------------------------------------------
+'''Reshape is used to fit arrays to the dimensions of the data.
+   scaler.fit_transform is used to scale the data to a range between 0 and 1.'''
+
 #Calculate correct C_my for prediction
 omega_large = eps_DNS2d_large/k_DNS2d/0.09
 
+# np.maximum is used to avoid division by zero
 k_DNS2d=np.maximum(k_DNS2d,viscous_large*omega_large)
 
 cmy_DNS_large = np.array(-uv2d_large/(k_DNS2d*(dudy_large + dvdx_large))*omega_large)
 
+# np.where is used to find the indices where the condition is true
 cmy_DNS_large = np.where(abs(dudy_large+dvdx_large)  < 1,1,cmy_DNS_large)
 cmy_DNS_large = np.where(cmy_DNS_large > 0,cmy_DNS_large,1)
 cmy_DNS_large = np.where(cmy_DNS_large <= 2, cmy_DNS_large, 1)
 
-
+# np.array is used to convert the list to an array
 duidxj_test = np.array((0.5*dudy_large**2 + dudx_large**2 + dvdy_large**2 + 0.5*dvdx_large**2)**0.5)
 duidxj_test = duidxj_test.reshape(-1,1)
 duidxj_test_scaled = scaler.fit_transform(duidxj_test)
@@ -365,9 +372,11 @@ k_scaled_large = scaler.fit_transform(k_scaled_large)
 uv_large_scaled = uv2d_large.reshape(-1,1)
 uv_large_scaled = scaler.fit_transform(uv_large_scaled)
 
+#2 columns for 3D plot, 1 for 2D --> comment second column
 X_test = np.zeros((len(duidxj_test),2))
 X_test[:,0] = duidxj_test_scaled[:,0]
 
+# Choose which model to use: k or uv   (k gives unrealistic results)
 #X_test[:,1] = k_scaled_large[:,0]
 X_test[:,1] = uv_large_scaled[:,0]
 
@@ -376,19 +385,18 @@ y_svr = model.predict(X_test)
 X_test_no_scale = scaler.inverse_transform(X_test)
 
 #----------------------------------------------Calculate Error----------------------------------------------
+errorML = (np.std(y_svr.flatten() - cmy_DNS_large.flatten()))/(np.mean(y_svr**2))**0.5
+error = (np.std(0.09 - cmy_DNS_large.flatten()))/(np.mean(0.09**2))**0.5
+errorOmega = (np.std(1-cmy_DNS_large.flatten()))/(np.mean((1)**2))**0.5
 
-#errorML = (np.std(y_svr - cmy_DNS_large))/(np.mean(y_svr**2))**0.5
-#error = (np.std(0.09 - cmy_DNS_large))/(np.mean(0.09**2))**0.5
-#errorOmega = (np.std(1-cmy_DNS_large))/(np.mean((1)**2))**0.5
-
-#predictOwnCase = model.predict(X)
-#errorOwnCase = (np.std(predictOwnCase - cmy_DNS))/(np.mean(predictOwnCase**2))**0.5
+predictOwnCase = model.predict(X)
+errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNS.flatten()))/(np.mean(predictOwnCase**2))**0.5
 
 #Print error
-#print("RMS-felet med ML är", errorML)
-#print("RMS-felet med standardmodell (C_my = 0.09) är", error)
-#print("RMS-felet med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
-#print("Error in fitting case is",errorOwnCase)
+print("RMS-felet med ML är", errorML)
+print("RMS-felet med standardmodell (C_my = 0.09) är", error)
+print("RMS-felet med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
+print("Error in fitting case is",errorOwnCase)
 
 #----------------------------------------------Plot Solution----------------------------------------------
 plt.figure("Test")
@@ -401,11 +409,10 @@ ax.scatter(X_test_no_scale[:,0],X_test_no_scale[:,1],cmy_DNS_large,marker = "o",
 ax.scatter(X_test_no_scale[:,0],X_test_no_scale[:,1],y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
 plt.legend(loc="upper right",prop=dict(size=12))
 ax.set_xlabel("$ || S_{i j}||$")
-ax.set_ylabel("$k$")
+ax.set_ylabel("$uv$")
 ax.set_zlabel("$C_\mu^{k-\omega}$")
-plt.title("$C_\mu^{k-\omega} = f( ||S_{i j}||,k)$")
-plt.savefig("Modell2_small_test_large.png")
-
+plt.title("$C_\mu^{k-\omega} = f( ||S_{i j}||,uv)$")
+plt.savefig("Modell_small_test_large_S_ij_uv_only_model.png")
 
 #----------------------------------------------Plot Cmy in domain----------------------------------------------
 #Fix dimensions of x and y, by deleting first row and column or last row and column
