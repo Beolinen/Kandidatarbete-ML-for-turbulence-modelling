@@ -1,7 +1,6 @@
 #----------------------------------------------Import Packages----------------------------------------------
 import scipy.io as sio
 import numpy as np
-from numpy import savetxt
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR  # for building SVR model
@@ -159,11 +158,12 @@ v2d_face_w,v2d_face_s=compute_face_phi(v2d,fx,fy,ni,nj)
 
 # x derivatives
 dudx=dphidx(u2d_face_w,u2d_face_s,areawx,areasx,vol)
-dvdx=dphidx(v2d_face_w,u2d_face_s,areawx,areasx,vol)
+dvdx=dphidx(v2d_face_w,v2d_face_s,areawx,areasx,vol)
 
-# x derivatives
-dudy=dphidx(u2d_face_w,u2d_face_s,areawy,areasy,vol)
-dvdy=dphidx(v2d_face_w,u2d_face_s,areawy,areasy,vol)
+# y derivatives
+dudy=dphidy(u2d_face_w,u2d_face_s,areawy,areasy,vol)
+dvdy=dphidy(v2d_face_w,v2d_face_s,areawy,areasy,vol)
+
 
 #----------------------------------------------Project-Group Work---------------------------------------------------
 #----------------------------------------------ML-Method Original Case----------------------------------------------
@@ -179,7 +179,6 @@ cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
 cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
 
 duidxj = np.array((dudx**2 + 0.5*(dudy**2 + 2*dudy*dvdx + dvdx**2) + dvdy**2)**0.5)
-#duidxj = np.delete(duidxj,indexDrop)
 
 #ML-metod
 # The MinMaxScaler works by first computing the minimum and maximum values of each feature in the training data. 
@@ -341,12 +340,12 @@ v2d_face_w,v2d_face_s=compute_face_phi(v2d_large,fx,fy,ni,nj)
 
 # x derivatives
 dudx_large=dphidx(u2d_face_w,u2d_face_s,areawx,areasx,vol)
-dvdx_large=dphidx(v2d_face_w,u2d_face_s,areawx,areasx,vol)
+dvdx_large=dphidx(v2d_face_w,v2d_face_s,areawx,areasx,vol)
 
-# x derivatives
-dudy_large=dphidx(u2d_face_w,u2d_face_s,areawy,areasy,vol)
-dvdy_large=dphidx(v2d_face_w,u2d_face_s,areawy,areasy,vol)
-
+# y derivatives
+dudy_large=dphidy(u2d_face_w,u2d_face_s,areawy,areasy,vol)
+dvdy_large=dphidy(v2d_face_w,v2d_face_s,areawy,areasy,vol)
+        
 #----------------------------------------------ML-Method Large Case----------------------------------------------
 '''Reshape is used to fit arrays to the dimensions of the data.
    scaler.fit_transform is used to scale the data to a range between 0 and 1.'''
@@ -447,7 +446,7 @@ plt.title("$C_\mu^{k-\omega} = f( ||S_{i j}||,uv)$")
 #ax.set_zlabel("$C_\mu^{k-\omega}$")
 
 plt.legend(loc="upper right",prop=dict(size=12))
-plt.savefig("Modell_small_test_large_S_ij_uv_only_model.png")
+plt.savefig("Modell_large_test_small_S_ij_model.png")
 
 #----------------------------------------------Plot Cmy in domain----------------------------------------------
 #Fix dimensions of x and y, by deleting first row and column or last row and column
@@ -483,66 +482,76 @@ plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("C_my_pred_in_domain.png")
 
 fig3, ax3 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
-fig3.colorbar(plt.contourf(x2d, y2d, duidxj_test, 1000), ax=ax3, label = "$C_\mu$")
+fig3.colorbar(plt.contourf(x2d, y2d, duidxj_test, 1000), ax=ax3, label = "$||S_{ij}||$")
 plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $||S_{ij}||$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("S_ij_in_domain.png")
 
 fig4, ax4 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
-fig4.colorbar(plt.contourf(x2d, y2d, u2d_large, 1000), ax=ax4, label = "$C_\mu$")
+fig4.colorbar(plt.contourf(x2d, y2d, u2d_large, 1000), ax=ax4, label = "$u(x,y)$")
 plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $u(x,y)$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("u_in_domain.png")
 
 fig5, ax5 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
-fig5.colorbar(plt.contourf(x2d, y2d, v2d_large, 1000), ax=ax5, label = "$C_\mu$")
+fig5.colorbar(plt.contourf(x2d, y2d, v2d_large, 1000), ax=ax5, label = "$v(x,y)$")
 plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $v(x,y)$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("v_in_domain.png")
 
 fig6, ax6 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
-fig6.colorbar(plt.contourf(x2d, y2d, dudy_large, 1000), ax=ax6, label = "$C_\mu$")
+fig6.colorbar(plt.contourf(x2d, y2d, dudy_large, 1000), ax=ax6, label = "$\partial u /\partial y$")
 plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $dudy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("dudy_in_domain.png")
 
 fig7, ax7 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
-fig7.colorbar(plt.contourf(x2d, y2d, dvdx_large, 1000), ax=ax7, label = "$C_\mu$")
+fig7.colorbar(plt.contourf(x2d, y2d, dvdx_large, 1000), ax=ax7, label = "$\partial v /\partial x$")
 plt.axis([0,3,-0.25,1.25])
 plt.title("Values of $dvdx$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("dvdx_in_domain.png")
 
 fig8, ax8 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 #plt.contourf(x2d, y2d, y_svr, 5)
 fig8.colorbar(plt.contourf(x2d, y2d, uu2d, 1000), ax=ax8, label = "uu2d")
 plt.axis([0,3,-0.25,1.25])
-plt.title("Values of $dvdx$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
+plt.title("Values of $uu$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
+plt.savefig("uu_in_domain.png")
+
+fig9, ax9 = plt.subplots()
+plt.subplots_adjust(left=0.20, bottom=0.20)
+#plt.contourf(x2d, y2d, y_svr, 5)
+fig9.colorbar(plt.contourf(x2d, y2d, dvdy_large, 1000), ax=ax9, label = "$\partial v /\partial y$")
+plt.axis([0,3,-0.25,1.25])
+plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
+plt.xlabel("$x [m]$")
+plt.ylabel("$y [m]$")
+plt.savefig("dvdy_in_domain.png")
 
 plt.show()
