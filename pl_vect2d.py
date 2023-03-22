@@ -65,19 +65,19 @@ uv2d = np.transpose(uv2d)
 k2d = np.transpose(k2d)
 eps_DNS2d = np.transpose(eps_DNS2d)
 
-# set Neumann of p at upper and lower boundaries
+# Set Neumann boundary conditions of p at upper and lower boundaries, what is p?
 p2d[:, 1] = p2d[:, 2]
 p2d[:, -1] = p2d[:, -1 - 1]
 
-# x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
+# x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d 
+#integrerningsgränser för punkter
 # load them
 xc_yc = np.loadtxt("small_wave/xc_yc.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
-xf2d = np.reshape(xf, (nj, ni))
-yf2d = np.reshape(yf, (nj, ni))
-xf2d = np.transpose(xf2d)
-yf2d = np.transpose(yf2d)
+xf2d = np.reshape(xf, (nj, ni)).transpose()
+yf2d = np.reshape(yf, (nj, ni)).transpose()
+
 
 # compute cell centers
 xp2d = 0.25*(x2d[0:-1,0:-1]+x2d[0:-1,1:]+x2d[1:,0:-1]+x2d[1:,1:])
@@ -199,6 +199,8 @@ uv_scaled = scaler.fit_transform(uv_scaled)
 #2 columns for 3D plot, 1 for 2D --> comment second column
 X = np.zeros((len(duidxj_scaled), 2))
 X[:,0] = duidxj_scaled[:,0]
+
+print 
 
 #Choose model
 #X[:,1] = k_scaled[:, 0]
