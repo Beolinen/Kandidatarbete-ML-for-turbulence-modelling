@@ -1,16 +1,25 @@
 #----------------------------------------------Import Packages----------------------------------------------
-import scipy.io as sio
+# Data manipulation
 import numpy as np
-import matplotlib.pyplot as plt
+import scipy.io as sio
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR  # for building SVR model
+
+# Machine learning: SVR model
+from sklearn.svm import SVR 
+
+# Comutations
 from gradients import compute_face_phi,dphidx,dphidy,init
 from sklearn.metrics import mean_squared_error
+
+# Plotting
+import matplotlib.pyplot as plt
+import matplotlib.cbook
+
+# Others
 import time
+import warnings
 
 #----------------------------------------------Read Data Original Case----------------------------------------------
-import warnings
-import matplotlib.cbook
 warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 # read data file
 st = time.process_time()
@@ -451,7 +460,7 @@ print("RMS-felet med standardmodell ,k-omega, (C_my = 1) är", errorRMS_Omega)
 print("Error in fitting case is",errorRMS_Own_Case)
 
 et = time.process_time()
-print("Time elapsed: " + str(et-st))
+print("Time elapsed: ", round((et-st),2), "seconds")
 print("Plotting")
 #----------------------------------------------Plot Solution----------------------------------------------
 plt.figure("Test")
