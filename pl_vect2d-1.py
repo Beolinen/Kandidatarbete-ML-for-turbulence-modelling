@@ -14,7 +14,7 @@ import matplotlib.cbook
 warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 # read data file
 st = time.process_time()
-tec=np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None,comments="%")
+tec=np.genfromtxt("large_wave/tec_large.dat", dtype=None,comments="%")
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
@@ -78,7 +78,7 @@ p2d[:, -1] = p2d[:, -1 - 1]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/xc_yc_large.dat")
+xc_yc = np.loadtxt("large_wave/xc_yc_large.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj, ni))
@@ -170,7 +170,7 @@ dvdx=dphidx(v2d_face_w,v2d_face_s,areawx,areasx,vol)
 dudy=dphidy(u2d_face_w,u2d_face_s,areawy,areasy,vol)
 dvdy=dphidy(v2d_face_w,v2d_face_s,areawy,areasy,vol)
 
-print("Data read")
+print("Finished reading data")
 print("Starting ML")
 #----------------------------------------------Project-Group Work---------------------------------------------------
 #----------------------------------------------ML-Method Original Case----------------------------------------------
@@ -219,14 +219,18 @@ X[:,3] = vv2d_scaled[:,0]
 
 Y = cmy_DNS
 
-#Choose model
+time0 = time.time()
+
+#Choose model & train model
 model = SVR(kernel = 'rbf', C = 1, epsilon = 0.001)
 SVR = model.fit(X,Y.flatten())
 
+time1 = time.time()
+print("Time to train model: ", round(time1-time0,2), "seconds")
 print("Reading new case")
 #----------------------------------------------Test With New Case------------------------------------------------
 #----------------------------------------------Read Data Large Case----------------------------------------------
-tec_large = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/tec.dat", dtype=None,comments="%")
+tec_large = np.genfromtxt("small_wave/tec.dat", dtype=None,comments="%")
 
 u_large = tec_large[:,3]
 v_large = tec_large[:,4]
@@ -267,7 +271,7 @@ uu2d_large = np.transpose(np.reshape(uu_large,(nj,ni)))
 vv2d_large = np.transpose(np.reshape(vv_large,(nj,ni)))
 ww2d_large = np.transpose(np.reshape(ww_large,(nj,ni)))
 
-xc_yc_large = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/xc_yc.dat")
+xc_yc_large = np.loadtxt("small_wave/xc_yc.dat")
 xf_large = xc_yc_large[:, 0]
 yf_large = xc_yc_large[:, 1]
 xf2d_large = np.reshape(xf_large, (nj, ni))
@@ -361,8 +365,8 @@ dvdy_large=dphidy(v2d_face_w,v2d_face_s,areawy,areasy,vol)
 
 print("Starting ML new case")
 #----------------------------------------------ML-Method Large Case----------------------------------------------
-'''Reshape is used to fit arrays to the dimensions of the data.
-   scaler.fit_transform is used to scale the data to a range between 0 and 1.'''
+# Reshape is used to fit arrays to the dimensions of the data.
+# scaler.fit_transform is used to scale the data to a range between 0 and 1.
 
 #Calculate correct C_my for prediction
 omega_large = eps_DNS2d_large/k_DNS2d/0.09
@@ -404,7 +408,13 @@ X_test[:,1] = uv_large_scaled[:,0]
 X_test[:,2] = p2d_large_scaled[:,0]
 X_test[:,3] = vv2d_large_scale[:,0]
 
-y_svr = model.predict(X_test)
+time0 = time.time()
+
+# Predict y
+y_svr = model.predict(X_test) 
+
+time1 = time.time()
+print("Time to predict y: ", round(time1-time0,2), "seconds")
 
 X_test_no_scale = scaler.inverse_transform(X_test)
 
