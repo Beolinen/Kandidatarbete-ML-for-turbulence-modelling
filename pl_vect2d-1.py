@@ -375,7 +375,7 @@ print("Starting ML new case")
 omega_large = eps_DNS2d_large / k_DNS2d / 0.09
 
 cmy_DNS_large = np.array(-uv2d_large / (k_DNS2d * (dudy_large + dvdx_large)) * omega_large)
-cmy_DNS_large = np.where(abs(dudy_large+dvdx_large)  > 1, 1, cmy_DNS_large)
+cmy_DNS_large = np.where(abs(dudy_large+dvdx_large) < 1, 1, cmy_DNS_large)
 cmy_DNS_large = np.where(cmy_DNS_large > 0, cmy_DNS_large, 1)
 cmy_DNS_large = np.where(cmy_DNS_large <= 2, cmy_DNS_large, 1)
 
