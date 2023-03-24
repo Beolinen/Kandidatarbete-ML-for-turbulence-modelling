@@ -180,9 +180,9 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
-cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
+# cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
 cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
-cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
+cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
@@ -375,9 +375,9 @@ print("Starting ML new case")
 omega_large = eps_DNS2d_large / k_DNS2d / 0.09
 
 cmy_DNS_large = np.array(-uv2d_large / (k_DNS2d * (dudy_large + dvdx_large)) * omega_large)
-cmy_DNS_large = np.where(abs(dudy_large+dvdx_large) < 1, 1, cmy_DNS_large)
+# cmy_DNS_large = np.where(abs(dudy_large+dvdx_large) < 1, 1, cmy_DNS_large)
 cmy_DNS_large = np.where(cmy_DNS_large > 0, cmy_DNS_large, 1)
-cmy_DNS_large = np.where(cmy_DNS_large <= 2, cmy_DNS_large, 1)
+cmy_DNS_large = np.where(cmy_DNS_large <= 3, cmy_DNS_large, 1)
 
 # plt.figure()
 # plt.plot(yp2d_large[-1,:],uv2d_large[-1,:], 'o')
