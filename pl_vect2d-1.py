@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR  # for building SVR model
 from gradients import compute_face_phi, dphidx, dphidy, init
-from sklearn.metrics import mean_squared_error
 from matplotlib import ticker
 import time
 import sys
@@ -446,15 +445,6 @@ for i in range(len(cmy_DNS_large.flatten())):
     c_k_eps.append(0.09)
     c_k_omega.append(1)
 
-errorRMS_ML = mean_squared_error(cmy_DNS_large.flatten(), y_svr.flatten())
-errorRMS = mean_squared_error(cmy_DNS_large.flatten(), c_k_eps)
-errorRMS_Omega = mean_squared_error(cmy_DNS_large.flatten(), c_k_omega)
-errorRMS_Own_Case = mean_squared_error(cmy_DNS.flatten(), y_svr.flatten())
-
-print("RMS-felet med ML är", errorRMS_ML)
-print("RMS-felet med standardmodell (C_my = 0.09) är", errorRMS)
-print("RMS-felet med standardmodell ,k-omega, (C_my = 1) är", errorRMS_Omega)
-print("Error in fitting case is", errorRMS_Own_Case)
 
 et = time.process_time()
 print("Time elapsed: " + str(et - st))
