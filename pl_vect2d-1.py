@@ -288,8 +288,6 @@ yf2d_large = np.reshape(yf_large, (nj - 1, ni - 1))
 xf2d_large = np.transpose(xf2d_large)
 yf2d_large = np.transpose(yf2d_large)
 
-
-
 # compute cell centers
 xp2d_large = 0.25 * (x2d_large[0:-1, 0:-1] + x2d_large[0:-1, 1:] + x2d_large[1:, 0:-1] + x2d_large[1:, 1:])
 yp2d_large = 0.25 * (y2d_large[0:-1, 0:-1] + y2d_large[0:-1, 1:] + y2d_large[1:, 0:-1] + y2d_large[1:, 1:])
@@ -358,9 +356,6 @@ nj = nj - 2
 
 # eps at last cell upper cell wrong. fix it.
 eps_DNS2d_large[:, -1] = eps_DNS2d_large[:, -2]
-
-print('new x2d.shape', x2d.shape)
-print('new u2d.shape', u2d.shape)
 
 # compute face value of U and V
 u2d_face_w, u2d_face_s = compute_face_phi(u2d_large, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
