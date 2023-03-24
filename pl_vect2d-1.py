@@ -178,9 +178,6 @@ print("Starting ML")
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
 omega = eps_DNS2d / k2d / 0.09
 
-# np.maximum is used to avoid division by zero
-k2d = np.maximum(k2d, viscos * omega)
-
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
 cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
@@ -455,11 +452,10 @@ for i in range(len(cmy_DNS_large.flatten())):
     c_k_eps.append(0.09)
     c_k_omega.append(1)
 
-
 et = time.process_time()
 print("Time elapsed: " + str(et - st))
 print("Plotting")
-sys.exit()
+
 # ----------------------------------------------Plot Solution----------------------------------------------
 plt.figure("Test")
 
@@ -489,7 +485,7 @@ y2d = np.delete(y2d, -1, 1)
 # plot the
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(x2d, y2d, cmy_DNS_large, 1000, cmap=plt.get_cmap("plasma")), ax=ax1, label="$C_\mu$")
+fig1.colorbar(plt.contourf(x2d, y2d, cmy_DNS, 1000, cmap=plt.get_cmap("plasma")), ax=ax1, label="$C_\mu$")
 plt.axis([0, 4, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS) in the area $[x_0,x_n] x [y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -501,7 +497,7 @@ y_svr = np.reshape(y_svr, (ni, nj))
 
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(x2d, y2d, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$")
+fig2.colorbar(plt.contourf(x2d, y2d, cmy_DNS_large, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$") # y_svr
 plt.axis([0, 4, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
