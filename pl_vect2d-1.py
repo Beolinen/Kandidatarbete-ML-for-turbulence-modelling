@@ -7,7 +7,7 @@ from gradients import compute_face_phi, dphidx, dphidy, init
 from matplotlib import ticker
 import time
 import sys
-
+print("test")
 # ----------------------------------------------Read Data Original Case----------------------------------------------
 import warnings
 import matplotlib.cbook
