@@ -532,7 +532,7 @@ y_svr = np.reshape(y_svr, (ni, nj))
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax2,
-              label="$C_\mu$")  # y_svr
+              label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
