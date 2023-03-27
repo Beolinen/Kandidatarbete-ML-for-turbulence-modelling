@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR  # for building SVR model
+import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
 import time
 import sys
