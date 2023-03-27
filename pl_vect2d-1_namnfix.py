@@ -12,67 +12,60 @@ import sys
 import warnings
 import matplotlib.cbook
 
+def get_ni_nj(y:np.array, x:np.array):
+    if max(y) == 1.:
+        ni = 170
+        nj = 194
+        nu = 1. / 10000.
+    else:
+        nu = 1. / 10595.
+        if max(x) > 8.:
+            nj = 162
+            ni = 162
+        else:
+            ni = 402
+            nj = 162
+    return ni,nj,nu    
+
 warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
+tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%").transpose()
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
 # Define variables from text-file
-x = tec[:, 0]  # Cell center x
-y = tec[:, 1]  # Cell center y
-p = tec[:, 2]  # Pressure
-u = tec[:, 3]  # Instant/laminar velocity in x
-v = tec[:, 4]  # Instant/laminar velocity in y
-uu = tec[:, 5]  # Stress
-vv = tec[:, 6]  # Stress
-ww = tec[:, 7]  # Stress
-uv = tec[:, 8]  # Stress
+x = tec[0]  # Cell center x
+y = tec[1]  # Cell center y
+p = tec[2]  # Pressure
+u = tec[3]  # Instant/laminar velocity in x
+v = tec[4]  # Instant/laminar velocity in y
+uu = tec[5]  # Stress
+vv = tec[6]  # Stress
+ww = tec[7]  # Stress
+uv = tec[8]  # Stress
+eps_DNS = tec[9]  # Dissipation'
 k_DNS = 0.5 * (uu + vv + ww)  # Turbulent kinetic energy (?)
-eps_DNS = tec[:, 9]  # Dissipation
 
 # Define matrix dimensions
-if max(y) == 1.:
-    ni = 170
-    nj = 194
-    nu = 1. / 10000.
-else:
-    nu = 1. / 10595.
-    if max(x) > 8.:
-        nj = 162
-        ni = 162
-    else:
-        ni = 402
-        nj = 162
+ni,nj,nu = get_ni_nj(y,x)
 
 viscos = nu
 
 # Reshape vectors to wanted dimensions
-u2d = np.reshape(u, (nj, ni))
-v2d = np.reshape(v, (nj, ni))
-p2d = np.reshape(p, (nj, ni))
-x2d = np.reshape(x, (nj, ni))
-y2d = np.reshape(y, (nj, ni))
-uu2d = np.reshape(uu, (nj, ni))  # =mean{v'_1v'_1}
-uv2d = np.reshape(uv, (nj, ni))  # =mean{v'_1v'_2}
-vv2d = np.reshape(vv, (nj, ni))  # =mean{v'_2v'_2}
-ww2d = np.reshape(ww, (nj, ni))
-k2d = np.reshape(k_DNS, (nj, ni))  # =mean{0.5(v'_iv'_i)}
-eps_DNS2d = np.reshape(eps_DNS, (nj, ni))
-
-u2d = np.transpose(u2d)
-v2d = np.transpose(v2d)
-p2d = np.transpose(p2d)
-x2d = np.transpose(x2d)
-y2d = np.transpose(y2d)
-uu2d = np.transpose(uu2d)
-vv2d = np.transpose(vv2d)
-ww2d = np.transpose(ww2d)
-uv2d = np.transpose(uv2d)
-k2d = np.transpose(k2d)
-eps_DNS2d = np.transpose(eps_DNS2d)
+u2d = np.reshape(u, (nj, ni)).transpose()
+print (u2d)
+v2d = np.reshape(v, (nj, ni)).transpose()
+p2d = np.reshape(p, (nj, ni)).transpose()
+x2d = np.reshape(x, (nj, ni)).transpose()
+y2d = np.reshape(y, (nj, ni)).transpose()
+uu2d = np.reshape(uu, (nj, ni)).transpose()  # =mean{v'_1v'_1}
+uv2d = np.reshape(uv, (nj, ni)).transpose()  # =mean{v'_1v'_2}
+vv2d = np.reshape(vv, (nj, ni)).transpose()  # =mean{v'_2v'_2}
+ww2d = np.reshape(ww, (nj, ni)).transpose()
+k2d = np.reshape(k_DNS, (nj, ni)).transpose()  # =mean{0.5(v'_iv'_i)}
+eps_DNS2d = np.reshape(eps_DNS, (nj, ni)).transpose()
 
 # set Neumann of p at upper and lower boundaries
 p2d[:, 1] = p2d[:, 2]
@@ -90,10 +83,8 @@ uu2d[0, :] = uu2d[-1, :]
 xc_yc = np.loadtxt("large_wave/mesh_large.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
-xf2d = np.reshape(xf, (nj - 1, ni - 1))
-yf2d = np.reshape(yf, (nj - 1, ni - 1))
-xf2d = np.transpose(xf2d)
-yf2d = np.transpose(yf2d)
+xf2d = np.reshape(xf, (nj - 1, ni - 1)).transpose()
+yf2d = np.reshape(yf, (nj - 1, ni - 1)).transpose()
 
 # compute cell centers
 xp2d = 0.25 * (x2d[0:-1, 0:-1] + x2d[0:-1, 1:] + x2d[1:, 0:-1] + x2d[1:, 1:])
@@ -114,49 +105,16 @@ yp2d = np.delete(yp2d, -1, 1)
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d, y2d, xp2d, yp2d)
 
-# delete last row
-u2d = np.delete(u2d, -1, 0)
-v2d = np.delete(v2d, -1, 0)
-p2d = np.delete(p2d, -1, 0)
-k2d = np.delete(k2d, -1, 0)
-uu2d = np.delete(uu2d, -1, 0)
-vv2d = np.delete(vv2d, -1, 0)
-ww2d = np.delete(ww2d, -1, 0)
-uv2d = np.delete(uv2d, -1, 0)
-eps_DNS2d = np.delete(eps_DNS2d, -1, 0)
-
-# delete first row
-u2d = np.delete(u2d, 0, 0)
-v2d = np.delete(v2d, 0, 0)
-p2d = np.delete(p2d, 0, 0)
-k2d = np.delete(k2d, 0, 0)
-uu2d = np.delete(uu2d, 0, 0)
-vv2d = np.delete(vv2d, 0, 0)
-ww2d = np.delete(ww2d, 0, 0)
-uv2d = np.delete(uv2d, 0, 0)
-eps_DNS2d = np.delete(eps_DNS2d, 0, 0)
-
-# delete last columns
-u2d = np.delete(u2d, -1, 1)
-v2d = np.delete(v2d, -1, 1)
-p2d = np.delete(p2d, -1, 1)
-k2d = np.delete(k2d, -1, 1)
-uu2d = np.delete(uu2d, -1, 1)
-vv2d = np.delete(vv2d, -1, 1)
-ww2d = np.delete(ww2d, -1, 1)
-uv2d = np.delete(uv2d, -1, 1)
-eps_DNS2d = np.delete(eps_DNS2d, -1, 1)
-
-# delete first columns
-u2d = np.delete(u2d, 0, 1)
-v2d = np.delete(v2d, 0, 1)
-p2d = np.delete(p2d, 0, 1)
-k2d = np.delete(k2d, 0, 1)
-uu2d = np.delete(uu2d, 0, 1)
-vv2d = np.delete(vv2d, 0, 1)
-ww2d = np.delete(ww2d, 0, 1)
-uv2d = np.delete(uv2d, 0, 1)
-eps_DNS2d = np.delete(eps_DNS2d, 0, 1)
+# delete first/last row/col
+u2d = np.delete(np.delete(u2d, [0,-1], 1), [0,-1], 0)
+v2d = np.delete(np.delete(v2d, [0,-1], 1), [0,-1], 0)
+p2d = np.delete(np.delete(p2d, [0,-1], 1), [0,-1], 0)
+k2d = np.delete(np.delete(k2d, [0,-1], 1), [0,-1], 0)
+uu2d = np.delete(np.delete(uu2d, [0,-1], 1), [0,-1], 0)
+vv2d = np.delete(np.delete(vv2d, [0,-1], 1), [0,-1], 0)
+ww2d = np.delete(np.delete(ww2d, [0,-1], 1), [0,-1], 0)
+uv2d = np.delete(np.delete(uv2d, [0,-1], 1), [0,-1], 0)
+eps_DNS2d = np.delete(np.delete(eps_DNS2d, [0,-1], 1), [0,-1], 0)
 
 ni = ni - 2
 nj = nj - 2
@@ -244,18 +202,7 @@ k_DNS_2 = 0.5 * (uu_2 + vv_2 + ww_2)
 eps_DNS_2 = tec_2[:, 9]
 p_2 = tec_2[:, 2]
 
-if max(y_2) == 1.:
-    ni = 170
-    nj = 194
-    nu = 1. / 10000.
-else:
-    nu = 1. / 10595.
-    if max(x_2) > 8.:
-        nj = 162
-        ni = 162
-    else:
-        ni = 402
-        nj = 162
+ni,nj,nu = get_ni_nj(y_2,x_2)
 
 viscous_2 = nu
 
@@ -308,49 +255,17 @@ yp2d_2 = np.delete(yp2d_2, -1, 1)
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d_2, y2d_2, xp2d_2, yp2d_2)
 
-# delete last row
-u2d_2 = np.delete(u2d_2, -1, 0)
-v2d_2 = np.delete(v2d_2, -1, 0)
-p2d_2 = np.delete(p2d_2, -1, 0)
-k_DNS2d = np.delete(k_DNS2d, -1, 0)
-uu2d_2 = np.delete(uu2d_2, -1, 0)
-vv2d_2 = np.delete(vv2d_2, -1, 0)
-ww2d_2 = np.delete(ww2d_2, -1, 0)
-uv2d_2 = np.delete(uv2d_2, -1, 0)
-eps_DNS2d_2 = np.delete(eps_DNS2d_2, -1, 0)
+# delete first/last row/col
+u2d_2 = np.delete(np.delete(u2d_2, [0,-1], 1), [0,-1], 0)
+v2d_2 = np.delete(np.delete(v2d_2, [0,-1], 1), [0,-1], 0)
+p2d_2 = np.delete(np.delete(p2d_2, [0,-1], 1), [0,-1], 0)
+k_DNS2d = np.delete(np.delete(k_DNS2d, [0,-1], 1), [0,-1], 0)
+uu2d_2 = np.delete(np.delete(uu2d_2, [0,-1], 1), [0,-1], 0)
+vv2d_2 = np.delete(np.delete(vv2d_2, [0,-1], 1), [0,-1], 0)
+ww2d_2 = np.delete(np.delete(ww2d_2, [0,-1], 1), [0,-1], 0)
+uv2d_2 = np.delete(np.delete(uv2d_2, [0,-1], 1), [0,-1], 0)
+eps_DNS2d_2 = np.delete(np.delete(eps_DNS2d_2, [0,-1], 1), [0,-1], 0)
 
-# delete first row
-u2d_2 = np.delete(u2d_2, 0, 0)
-v2d_2 = np.delete(v2d_2, 0, 0)
-p2d_2 = np.delete(p2d_2, 0, 0)
-k_DNS2d = np.delete(k_DNS2d, 0, 0)
-uu2d_2 = np.delete(uu2d_2, 0, 0)
-vv2d_2 = np.delete(vv2d_2, 0, 0)
-ww2d_2 = np.delete(ww2d_2, 0, 0)
-uv2d_2 = np.delete(uv2d_2, 0, 0)
-eps_DNS2d_2 = np.delete(eps_DNS2d_2, 0, 0)
-
-# delete last columns
-u2d_2 = np.delete(u2d_2, -1, 1)
-v2d_2 = np.delete(v2d_2, -1, 1)
-p2d_2 = np.delete(p2d_2, -1, 1)
-k_DNS2d = np.delete(k_DNS2d, -1, 1)
-uu2d_2 = np.delete(uu2d_2, -1, 1)
-vv2d_2 = np.delete(vv2d_2, -1, 1)
-ww2d_2 = np.delete(ww2d_2, -1, 1)
-uv2d_2 = np.delete(uv2d_2, -1, 1)
-eps_DNS2d_2 = np.delete(eps_DNS2d_2, -1, 1)
-
-# delete first columns
-u2d_2 = np.delete(u2d_2, 0, 1)
-v2d_2 = np.delete(v2d_2, 0, 1)
-p2d_2 = np.delete(p2d_2, 0, 1)
-k_DNS2d = np.delete(k_DNS2d, 0, 1)
-uu2d_2 = np.delete(uu2d_2, 0, 1)
-vv2d_2 = np.delete(vv2d_2, 0, 1)
-ww2d_2 = np.delete(ww2d_2, 0, 1)
-uv2d_2 = np.delete(uv2d_2, 0, 1)
-eps_DNS2d_2 = np.delete(eps_DNS2d_2, 0, 1)
 
 ni = ni - 2
 nj = nj - 2
