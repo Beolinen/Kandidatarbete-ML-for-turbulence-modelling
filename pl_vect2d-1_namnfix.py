@@ -420,7 +420,7 @@ p2d_2_scaled = scaler.fit_transform(p2d_2_reshape)
 vv2d_2_scale = scaler.fit_transform(vv2d_2_reshape)
 uu2d_2_scale = scaler.fit_transform(uu2d_2_reshape)
 
-# x (ammount of input variables) columns for 3D plot, 1 for 2D --> comment second column, (k gives unrealistic results)
+# x (amount of input variables) columns for 3D plot, 1 for 2D --> comment second column, (k gives unrealistic results)
 X_test = np.zeros((len(duidxj_test_scaled), 7))
 X_test[:, 0] = duidxj_test_scaled[:, 0]
 X_test[:, 1] = uv_2_scaled[:, 0]
