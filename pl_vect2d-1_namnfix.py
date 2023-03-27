@@ -184,7 +184,7 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
-cmy_DNS = np.where(abs(dudy + dvdx) < 15, 1, cmy_DNS)
+cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
 cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
 cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
@@ -379,7 +379,7 @@ print("Starting ML new case")
 omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
-# cmy_DNS_large = np.where(abs(dudy_large+dvdx_large) < 15, 1, cmy_DNS_large)
+cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
 cmy_DNS_2 = np.where(cmy_DNS_2 > 0, cmy_DNS_2, 1)
 cmy_DNS_2 = np.where(cmy_DNS_2 <= 3, cmy_DNS_2, 1)
 
