@@ -12,6 +12,8 @@ import sys
 import warnings
 import matplotlib.cbook
 
+warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+
 # read data file
 st = time.process_time()
 tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
@@ -19,17 +21,17 @@ tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
 # Define variables from text-file
-x = tec[:, 0] # Cell center x
-y = tec[:, 1] # Cell center y
-p = tec[:, 2] # Pressure
-u = tec[:, 3] # Instant/laminar velocity in x
-v = tec[:, 4] # Instant/laminar velocity in y
-uu = tec[:, 5] # Stress
-vv = tec[:, 6] # Stress
-ww = tec[:, 7] # Stress
-uv = tec[:, 8] # Stress
-k_DNS = 0.5 * (uu + vv + ww) # Turbulent kinetic energy (?)
-eps_DNS = tec[:, 9] # Dissipation
+x = tec[:, 0]  # Cell center x
+y = tec[:, 1]  # Cell center y
+p = tec[:, 2]  # Pressure
+u = tec[:, 3]  # Instant/laminar velocity in x
+v = tec[:, 4]  # Instant/laminar velocity in y
+uu = tec[:, 5]  # Stress
+vv = tec[:, 6]  # Stress
+ww = tec[:, 7]  # Stress
+uv = tec[:, 8]  # Stress
+k_DNS = 0.5 * (uu + vv + ww)  # Turbulent kinetic energy (?)
+eps_DNS = tec[:, 9]  # Dissipation
 
 # Define matrix dimensions
 if max(y) == 1.:
@@ -78,9 +80,9 @@ p2d[:, -1] = p2d[:, -1 - 1]
 
 # set periodic b.c on west boundary
 # SHOULD WE USE THIS?
-u2d[0,:] = u2d[-1, :]
+u2d[0, :] = u2d[-1, :]
 v2d[0, :] = v2d[-1, :]
-p2d[0, ] = p2d[-1, :]
+p2d[0,] = p2d[-1, :]
 uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
@@ -274,9 +276,9 @@ p2d_2[:, 1] = p2d_2[:, 2]
 p2d_2[:, -1] = p2d_2[:, -1 - 1]
 
 # set periodic b.c on west boundary
-u2d_2[0,:] = u2d_2[-1, :]
+u2d_2[0, :] = u2d_2[-1, :]
 v2d_2[0, :] = v2d_2[-1, :]
-p2d_2[0, ] = p2d_2[-1, :]
+p2d_2[0,] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
 xc_yc_2 = np.loadtxt("small_wave/mesh.dat")
@@ -398,7 +400,7 @@ cmy_DNS_2 = np.where(cmy_DNS_2 <= 3, cmy_DNS_2, 1)
 
 # np.array is used to convert the list to an array
 duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (
-            dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
+        dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
 
 # Reshape data
 duidxj_test_reshape = duidxj_test.reshape(-1, 1)
@@ -448,12 +450,42 @@ print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", err
 print("Coefficient of varience in fitting case is", errorOwnCase)
 
 # RMS ERROR
-c_k_eps = []
-c_k_omega = []
-for i in range(len(cmy_DNS_2.flatten())):
-    c_k_eps.append(0.09)
-    c_k_omega.append(1)
+c_k_eps = [0.09] * len(cmy_DNS_2.flatten())
+c_k_omega = [1] * len(cmy_DNS_2.flatten())
 
+# -------------------------------------Calculate Error with Sklearn metrics--------------------------------
+# Mean absolute error: This is the average of absolute errors of all the data points in the given dataset.
+
+# Mean squared error: This is the average of the squares of the errors of all the data points in the given dataset.
+# It is one of the most popular metrics out there!
+
+# Median absolute error: This is the median of all the errors in the given dataset.
+# The main advantage of this metric is that it's robust to outliers.
+# A single bad point in the test dataset wouldn't skew the entire error metric, as opposed to a mean error metric.
+
+# Explained variance score: This score measures how well our model can account for the variation in our dataset.
+# A score of 1.0 indicates that our model is perfect.
+
+# R2 score: This is pronounced as R-squared, and this score refers to the coefficient of determination.
+# This tells us how well the unknown samples will be predicted by our model.
+# The best possible score is 1.0, but the score can be negative as well.
+print("Errors with machine-learning model:")
+print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
+print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
+print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
+print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
+print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
+
+print("Error with standard model:")
+print("Mean absolute error =",
+      round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Mean squared error =",
+      round(sm.mean_squared_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Median absolute error =",
+      round(sm.median_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Explain variance score =",
+      round(sm.explained_variance_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
 et = time.process_time()
 print("Time elapsed: " + str(et - st))
 print("Plotting")
@@ -499,7 +531,8 @@ y_svr = np.reshape(y_svr, (ni, nj))
 
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$") # y_svr
+fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax2,
+              label="$C_\mu$")  # y_svr
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -508,7 +541,8 @@ plt.savefig("pictures/C_my_pred_in_domain.png")
 
 fig3, ax3 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, abs(dudy_2 + dvdx_2), 1000, cmap=plt.get_cmap("plasma")), ax=ax3, label="$||S_{ij}||$")
+fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, abs(dudy_2 + dvdx_2), 1000, cmap=plt.get_cmap("plasma")), ax=ax3,
+              label="$||S_{ij}||$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $||S_{ij}||$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -535,7 +569,8 @@ plt.savefig("pictures/v_in_domain.png")
 
 fig6, ax6 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig6.colorbar(plt.contourf(xp2d_2, yp2d_2, dudy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax6, label="$\partial u /\partial y$")
+fig6.colorbar(plt.contourf(xp2d_2, yp2d_2, dudy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax6,
+              label="$\partial u /\partial y$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $dudy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -544,7 +579,8 @@ plt.savefig("pictures/dudy_in_domain.png")
 
 fig7, ax7 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig7.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdx_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax7, label="$\partial v /\partial x$")
+fig7.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdx_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax7,
+              label="$\partial v /\partial x$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $dvdx$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -562,7 +598,8 @@ plt.savefig("pictures/uu_in_domain.png")
 
 fig9, ax9 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig9.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax9, label="$\partial v /\partial y$")
+fig9.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax9,
+              label="$\partial v /\partial y$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -571,7 +608,7 @@ plt.savefig("pictures/dvdy_in_domain.png")
 
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$") # y_svr
+fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$")  # y_svr
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
