@@ -98,49 +98,66 @@ yp2d = np.delete(yp2d, -1, 1)
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d, y2d, xp2d, yp2d)
 
-# delete last row
-u2d = np.delete(u2d, -1, 0)
-v2d = np.delete(v2d, -1, 0)
-p2d = np.delete(p2d, -1, 0)
-k2d = np.delete(k2d, -1, 0)
-uu2d = np.delete(uu2d, -1, 0)
-vv2d = np.delete(vv2d, -1, 0)
-ww2d = np.delete(ww2d, -1, 0)
-uv2d = np.delete(uv2d, -1, 0)
-eps_DNS2d = np.delete(eps_DNS2d, -1, 0)
+print(u2d)
 
-# delete first row
-u2d = np.delete(u2d, 0, 0)
-v2d = np.delete(v2d, 0, 0)
-p2d = np.delete(p2d, 0, 0)
-k2d = np.delete(k2d, 0, 0)
-uu2d = np.delete(uu2d, 0, 0)
-vv2d = np.delete(vv2d, 0, 0)
-ww2d = np.delete(ww2d, 0, 0)
-uv2d = np.delete(uv2d, 0, 0)
-eps_DNS2d = np.delete(eps_DNS2d, 0, 0)
+# delete last row,first row,last column,first column
+u2d = np.delete(np.delete(u2d,[0,-1],1),[0,-1],0)
+v2d = np.delete(np.delete(v2d,[0,-1],1),[0,-1],0)
+p2d = np.delete(np.delete(p2d,[0,-1],1),[0,-1],0)
+k2d = np.delete(np.delete(k2d,[0,-1],1),[0,-1],0)
+uu2d = np.delete(np.delete(uu2d,[0,-1],1),[0,-1],0)
+vv2d = np.delete(np.delete(vv2d,[0,-1],1),[0,-1],0)
+ww2d = np.delete(np.delete(ww2d,[0,-1],1),[0,-1],0)
+uv2d = np.delete(np.delete(uv2d,[0,-1],1),[0,-1],0)
+eps_DNS2d = np.delete(np.delete(eps_DNS2d,[0,-1],1),[0,-1],0)
 
-# delete last columns
-u2d = np.delete(u2d, -1, 1)
-v2d = np.delete(v2d, -1, 1)
-p2d = np.delete(p2d, -1, 1)
-k2d = np.delete(k2d, -1, 1)
-uu2d = np.delete(uu2d, -1, 1)
-vv2d = np.delete(vv2d, -1, 1)
-ww2d = np.delete(ww2d, -1, 1)
-uv2d = np.delete(uv2d, -1, 1)
-eps_DNS2d = np.delete(eps_DNS2d, -1, 1)
+print(u2d)
 
-# delete first columns
-u2d = np.delete(u2d, 0, 1)
-v2d = np.delete(v2d, 0, 1)
-p2d = np.delete(p2d, 0, 1)
-k2d = np.delete(k2d, 0, 1)
-uu2d = np.delete(uu2d, 0, 1)
-vv2d = np.delete(vv2d, 0, 1)
-ww2d = np.delete(ww2d, 0, 1)
-uv2d = np.delete(uv2d, 0, 1)
-eps_DNS2d = np.delete(eps_DNS2d, 0, 1)
+# # delete last row
+# u2d = np.delete(u2d, -1, 0)
+# v2d = np.delete(v2d, -1, 0)
+# p2d = np.delete(p2d, -1, 0)
+# k2d = np.delete(k2d, -1, 0)
+# uu2d = np.delete(uu2d, -1, 0)
+# vv2d = np.delete(vv2d, -1, 0)
+# ww2d = np.delete(ww2d, -1, 0)
+# uv2d = np.delete(uv2d, -1, 0)
+# eps_DNS2d = np.delete(eps_DNS2d, -1, 0)
+
+# # delete first row
+# u2d = np.delete(u2d, 0, 0)
+# v2d = np.delete(v2d, 0, 0)
+# p2d = np.delete(p2d, 0, 0)
+# k2d = np.delete(k2d, 0, 0)
+# uu2d = np.delete(uu2d, 0, 0)
+# vv2d = np.delete(vv2d, 0, 0)
+# ww2d = np.delete(ww2d, 0, 0)
+# uv2d = np.delete(uv2d, 0, 0)
+# eps_DNS2d = np.delete(eps_DNS2d, 0, 0)
+
+# # delete last columns
+# u2d = np.delete(u2d, -1, 1)
+# v2d = np.delete(v2d, -1, 1)
+# p2d = np.delete(p2d, -1, 1)
+# k2d = np.delete(k2d, -1, 1)
+# uu2d = np.delete(uu2d, -1, 1)
+# vv2d = np.delete(vv2d, -1, 1)
+# ww2d = np.delete(ww2d, -1, 1)
+# uv2d = np.delete(uv2d, -1, 1)
+# eps_DNS2d = np.delete(eps_DNS2d, -1, 1)
+
+# # delete first columns
+# u2d = np.delete(u2d, 0, 1)
+# v2d = np.delete(v2d, 0, 1)
+# p2d = np.delete(p2d, 0, 1)
+# k2d = np.delete(k2d, 0, 1)
+# uu2d = np.delete(uu2d, 0, 1)
+# vv2d = np.delete(vv2d, 0, 1)
+# ww2d = np.delete(ww2d, 0, 1)
+# uv2d = np.delete(uv2d, 0, 1)
+# eps_DNS2d = np.delete(eps_DNS2d, 0, 1)
+
+# print(u2d)
 
 ni = ni-2
 nj = nj-2
@@ -174,7 +191,7 @@ k2d = np.maximum(k2d, viscos*omega)
 
 cmy_DNS = np.array(-uv2d/(k2d*(dudy + dvdx))*omega) 
 
-cmy_DNS = np.where(abs(dudy + dvdx)  < 1,1, cmy_DNS)
+cmy_DNS = np.where(abs(dudy + dvdx)  < 1, cmy_DNS, 1) #if |dudy + dvdx| < 1: cmy_DNS = cmy_DNS; else: cmy_DNS = 1
 cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS,1)
 cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
 

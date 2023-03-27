@@ -11,8 +11,8 @@ def init(x2d,y2d,xp2d,yp2d):
    del1x=((xw-xp2d)**2+(yw-yp2d)**2)**0.5
    del2x=((xw-np.roll(xp2d,1,axis=0))**2+(yw-np.roll(yp2d,1,axis=0))**2)**0.5
    fx=del2x/(del1x+del2x)
-#  if cyclic_x: cyclic means
-   fx[0,:]=0.5
+#  if cyclic_x: cyclic means that the first and last column are the same
+#  fx[0,:]=0.5
 
 #  south face coordinate
    xs=0.5*(x2d[0:-1,0:-1]+x2d[1:,0:-1])
