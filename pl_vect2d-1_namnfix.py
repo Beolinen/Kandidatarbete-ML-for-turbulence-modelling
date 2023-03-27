@@ -82,7 +82,7 @@ p2d[:, -1] = p2d[:, -1 - 1]
 # SHOULD WE USE THIS?
 u2d[0, :] = u2d[-1, :]
 v2d[0, :] = v2d[-1, :]
-p2d[0,] = p2d[-1, :]
+p2d[0, :] = p2d[-1, :]
 uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
@@ -278,7 +278,7 @@ p2d_2[:, -1] = p2d_2[:, -1 - 1]
 # set periodic b.c on west boundary
 u2d_2[0, :] = u2d_2[-1, :]
 v2d_2[0, :] = v2d_2[-1, :]
-p2d_2[0,] = p2d_2[-1, :]
+p2d_2[0, :] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
 xc_yc_2 = np.loadtxt("small_wave/mesh.dat")
