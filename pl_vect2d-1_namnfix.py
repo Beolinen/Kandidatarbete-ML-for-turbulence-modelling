@@ -1,5 +1,3 @@
-
-
 # ----------------------------------------------Import Packages------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,148 +7,200 @@ import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
 import time
 import sys
-import warnings
-import matplotlib.cbook
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # ----------------------------------------------Read Data Original Case----------------------------------------------
+import warnings
+import matplotlib.cbook
 
-def dat_to_variable_arrays(path:str):
-    tec = np.genfromtxt(path, dtype=None, comments="%").transpose()
-    k_DNS = 0.5 * (tec[5] + tec[6] + tec[7])  # Turbulent kinetic energy (?)
-
-    nu,ni,nj = get_ni_nj(tec[1],tec[0])
-
-    k_DNS = np.reshape(k_DNS, (nj, ni)).transpose() #k_DNS has the shape [ni,nj]
-    tec = tec.reshape(10,nj,ni)                     #tec is reshaped so every variable has the shape [nj,ni]
-    tec = np.transpose(tec,axes=[0,2,1])            #tec is transposed
-
-    x       = tec[0]
-    y       = tec[1]
-    p       = tec[2]
-    u       = tec[3]
-    v       = tec[4]
-    uu      = tec[5]
-    vv      = tec[6]
-    ww      = tec[7]
-    uv      = tec[8]
-    eps_DNS = tec[9]
-
-
-    return x,y,p,u,v,uu,vv,ww,uv,eps_DNS,k_DNS,ni,nj
-  
-def get_ni_nj(y:np.array, x:np.array):
-    if max(y) == 1.:
-        ni,nj = 170,194
-        nu = 1. / 10000.
-    else:
-        nu = 1. / 10595.
-        if max(x) > 8.:
-            ni,nj = 162,162
-        else:
-            ni,nj = 402,162
-    return nu,ni,nj    
+warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-
+tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
 
 print("Starting script")
+# text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
+# Define variables from text-file
+x = tec[:, 0]  # Cell center x
+y = tec[:, 1]  # Cell center y
+p = tec[:, 2]  # Pressure
+u = tec[:, 3]  # Instant/laminar velocity in x
+v = tec[:, 4]  # Instant/laminar velocity in y
+uu = tec[:, 5]  # Stress
+vv = tec[:, 6]  # Stress
+ww = tec[:, 7]  # Stress
+uv = tec[:, 8]  # Stress
+k_DNS = 0.5 * (uu + vv + ww)  # Turbulent kinetic energy (?)
+eps_DNS = tec[:, 9]  # Dissipation
 
-#get variables from .dat
-x,y,p,u,v,uu,vv,ww,uv,eps_DNS,k_DNS,ni,nj = dat_to_variable_arrays("large_wave/tec_large.dat")
+# Define matrix dimensions
+if max(y) == 1.:
+    ni = 170
+    nj = 194
+    nu = 1. / 10000.
+else:
+    nu = 1. / 10595.
+    if max(x) > 8.:
+        nj = 162
+        ni = 162
+    else:
+        ni = 402
+        nj = 162
 
+viscos = nu
+
+# Reshape vectors to wanted dimensions
+u2d = np.reshape(u, (nj, ni))
+v2d = np.reshape(v, (nj, ni))
+p2d = np.reshape(p, (nj, ni))
+x2d = np.reshape(x, (nj, ni))
+y2d = np.reshape(y, (nj, ni))
+uu2d = np.reshape(uu, (nj, ni))  # =mean{v'_1v'_1}
+uv2d = np.reshape(uv, (nj, ni))  # =mean{v'_1v'_2}
+vv2d = np.reshape(vv, (nj, ni))  # =mean{v'_2v'_2}
+ww2d = np.reshape(ww, (nj, ni))
+k2d = np.reshape(k_DNS, (nj, ni))  # =mean{0.5(v'_iv'_i)}
+eps_DNS2d = np.reshape(eps_DNS, (nj, ni))
+
+u2d = np.transpose(u2d)
+v2d = np.transpose(v2d)
+p2d = np.transpose(p2d)
+x2d = np.transpose(x2d)
+y2d = np.transpose(y2d)
+uu2d = np.transpose(uu2d)
+vv2d = np.transpose(vv2d)
+ww2d = np.transpose(ww2d)
+uv2d = np.transpose(uv2d)
+k2d = np.transpose(k2d)
+eps_DNS2d = np.transpose(eps_DNS2d)
 
 # set Neumann of p at upper and lower boundaries
-p[:, 1]  = p[:, 2]
-p[:, -1] = p[:, -1 - 1]
+p2d[:, 1] = p2d[:, 2]
+p2d[:, -1] = p2d[:, -1 - 1]
 
 # set periodic b.c on west boundary
 # SHOULD WE USE THIS?
-u[0, :]  = u[-1, :]
-v[0, :]  = v[-1, :]
-p[0,]    = p[-1, :]
-uu[0, :] = uu[-1, :]
+u2d[0, :] = u2d[-1, :]
+v2d[0, :] = v2d[-1, :]
+p2d[0, :] = p2d[-1, :]
+uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("large_wave/mesh_large.dat").transpose()
-xf = np.reshape(xc_yc[0], (nj-1, ni-1)).transpose()
-yf = np.reshape(xc_yc[1], (nj-1, ni-1)).transpose()
+xc_yc = np.loadtxt("large_wave/mesh_large.dat")
+xf = xc_yc[:, 0]
+yf = xc_yc[:, 1]
+xf2d = np.reshape(xf, (nj - 1, ni - 1))
+yf2d = np.reshape(yf, (nj - 1, ni - 1))
+xf2d = np.transpose(xf2d)
+yf2d = np.transpose(yf2d)
 
 # compute cell centers
-xp = 0.25 * (x[0:-1, 0:-1] + x[0:-1, 1:] + x[1:, 0:-1] + x[1:, 1:])
-yp = 0.25 * (y[0:-1, 0:-1] + y[0:-1, 1:] + y[1:, 0:-1] + y[1:, 1:])
+xp2d = 0.25 * (x2d[0:-1, 0:-1] + x2d[0:-1, 1:] + x2d[1:, 0:-1] + x2d[1:, 1:])
+yp2d = 0.25 * (y2d[0:-1, 0:-1] + y2d[0:-1, 1:] + y2d[1:, 0:-1] + y2d[1:, 1:])
 
 # delete last row
-x = np.delete(x, -1, 0)
-y = np.delete(y, -1, 0)
-xp = np.delete(xp, -1, 0)
-yp = np.delete(yp, -1, 0)
+x2d = np.delete(x2d, -1, 0)
+y2d = np.delete(y2d, -1, 0)
+xp2d = np.delete(xp2d, -1, 0)
+yp2d = np.delete(yp2d, -1, 0)
 
 # delete last columns
-x = np.delete(x, -1, 1)
-y = np.delete(y, -1, 1)
-xp = np.delete(xp, -1, 1)
-yp = np.delete(yp, -1, 1)
+x2d = np.delete(x2d, -1, 1)
+y2d = np.delete(y2d, -1, 1)
+xp2d = np.delete(xp2d, -1, 1)
+yp2d = np.delete(yp2d, -1, 1)
 
 # compute geometric quantities
-areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x, y, xp, yp)
+areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d, y2d, xp2d, yp2d)
 
-# delete first/last row/col
-u = np.delete(np.delete(u, [0,-1], 1), [0,-1], 0)
-v = np.delete(np.delete(v, [0,-1], 1), [0,-1], 0)
-p = np.delete(np.delete(p, [0,-1], 1), [0,-1], 0)
-uu = np.delete(np.delete(uu, [0,-1], 1), [0,-1], 0)
-vv = np.delete(np.delete(vv, [0,-1], 1), [0,-1], 0)
-ww = np.delete(np.delete(ww, [0,-1], 1), [0,-1], 0)
-uv = np.delete(np.delete(uv, [0,-1], 1), [0,-1], 0)
-eps_DNS = np.delete(np.delete(eps_DNS, [0,-1], 1), [0,-1], 0)
-k_DNS = np.delete(np.delete(k_DNS, [0,-1], 1), [0,-1], 0)
+# delete last row
+u2d = np.delete(u2d, -1, 0)
+v2d = np.delete(v2d, -1, 0)
+p2d = np.delete(p2d, -1, 0)
+k2d = np.delete(k2d, -1, 0)
+uu2d = np.delete(uu2d, -1, 0)
+vv2d = np.delete(vv2d, -1, 0)
+ww2d = np.delete(ww2d, -1, 0)
+uv2d = np.delete(uv2d, -1, 0)
+eps_DNS2d = np.delete(eps_DNS2d, -1, 0)
 
-ni -= 2
-nj -= 2
+# delete first row
+u2d = np.delete(u2d, 0, 0)
+v2d = np.delete(v2d, 0, 0)
+p2d = np.delete(p2d, 0, 0)
+k2d = np.delete(k2d, 0, 0)
+uu2d = np.delete(uu2d, 0, 0)
+vv2d = np.delete(vv2d, 0, 0)
+ww2d = np.delete(ww2d, 0, 0)
+uv2d = np.delete(uv2d, 0, 0)
+eps_DNS2d = np.delete(eps_DNS2d, 0, 0)
+
+# delete last columns
+u2d = np.delete(u2d, -1, 1)
+v2d = np.delete(v2d, -1, 1)
+p2d = np.delete(p2d, -1, 1)
+k2d = np.delete(k2d, -1, 1)
+uu2d = np.delete(uu2d, -1, 1)
+vv2d = np.delete(vv2d, -1, 1)
+ww2d = np.delete(ww2d, -1, 1)
+uv2d = np.delete(uv2d, -1, 1)
+eps_DNS2d = np.delete(eps_DNS2d, -1, 1)
+
+# delete first columns
+u2d = np.delete(u2d, 0, 1)
+v2d = np.delete(v2d, 0, 1)
+p2d = np.delete(p2d, 0, 1)
+k2d = np.delete(k2d, 0, 1)
+uu2d = np.delete(uu2d, 0, 1)
+vv2d = np.delete(vv2d, 0, 1)
+ww2d = np.delete(ww2d, 0, 1)
+uv2d = np.delete(uv2d, 0, 1)
+eps_DNS2d = np.delete(eps_DNS2d, 0, 1)
+
+ni = ni - 2
+nj = nj - 2
 
 # eps at last cell upper cell wrong. fix it.
-eps_DNS[:, -1] = eps_DNS[:, -2]
+eps_DNS2d[:, -1] = eps_DNS2d[:, -2]
 
 # compute face value of U and V
-u_face_w, u_face_s = compute_face_phi(u, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
-v_face_w, v_face_s = compute_face_phi(v, fx, fy, ni, nj)
+u2d_face_w, u2d_face_s = compute_face_phi(u2d, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
+v2d_face_w, v2d_face_s = compute_face_phi(v2d, fx, fy, ni, nj)
 
 # x derivatives
-dudx = dphidx(u_face_w, u_face_s, areawx, areasx, vol)
-dvdx = dphidx(v_face_w, v_face_s, areawx, areasx, vol)
+dudx = dphidx(u2d_face_w, u2d_face_s, areawx, areasx, vol)
+dvdx = dphidx(v2d_face_w, v2d_face_s, areawx, areasx, vol)
 
 # y derivatives
-dudy = dphidy(u_face_w, u_face_s, areawy, areasy, vol)
-dvdy = dphidy(v_face_w, v_face_s, areawy, areasy, vol)
+dudy = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
+dvdy = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
 
 print("Data read")
 print("Starting ML")
 # ----------------------------------------------Project-Group Work---------------------------------------------------
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
-omega = eps_DNS / k_DNS / 0.09
+omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
-cmy_DNS = np.array(-uv / (k_DNS * (dudy + dvdx)) * omega)
-cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
+cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+# cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
 cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
 cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
 # ML-metod
-scaler = StandardScaler()
+scaler = StandardScaler() # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
 
 # Reshape Data
 duidxj = duidxj.reshape(-1, 1)
-k_scaled_reshaped = k_DNS.reshape(-1, 1)
-uv_scaled_reshaped = uv.reshape(-1, 1)
-eps_scaled_reshaped = eps_DNS.reshape(-1, 1)
-p2d_scaled_reshaped = p.reshape(-1, 1)
-vv2d_scaled_reshaped = vv.reshape(-1, 1)
-uu2d_scaled_reshaped = uu.reshape(-1, 1)
+k_scaled_reshaped = k2d.reshape(-1, 1)
+uv_scaled_reshaped = uv2d.reshape(-1, 1)
+eps_scaled_reshaped = eps_DNS2d.reshape(-1, 1)
+p2d_scaled_reshaped = p2d.reshape(-1, 1)
+vv2d_scaled_reshaped = vv2d.reshape(-1, 1)
+uu2d_scaled_reshaped = uu2d.reshape(-1, 1)
 
 # scale data
 duidxj_scaled = scaler.fit_transform(duidxj)
@@ -194,7 +244,18 @@ k_DNS_2 = 0.5 * (uu_2 + vv_2 + ww_2)
 eps_DNS_2 = tec_2[:, 9]
 p_2 = tec_2[:, 2]
 
-nu,ni,nj = get_ni_nj(y_2,x_2)
+if max(y_2) == 1.:
+    ni = 170
+    nj = 194
+    nu = 1. / 10000.
+else:
+    nu = 1. / 10595.
+    if max(x_2) > 8.:
+        nj = 162
+        ni = 162
+    else:
+        ni = 402
+        nj = 162
 
 viscous_2 = nu
 
@@ -210,7 +271,6 @@ uu2d_2 = np.transpose(np.reshape(uu_2, (nj, ni)))
 vv2d_2 = np.transpose(np.reshape(vv_2, (nj, ni)))
 ww2d_2 = np.transpose(np.reshape(ww_2, (nj, ni)))
 
-
 # set Neumann of p at upper and lower boundaries
 p2d_2[:, 1] = p2d_2[:, 2]
 p2d_2[:, -1] = p2d_2[:, -1 - 1]
@@ -218,7 +278,7 @@ p2d_2[:, -1] = p2d_2[:, -1 - 1]
 # set periodic b.c on west boundary
 u2d_2[0, :] = u2d_2[-1, :]
 v2d_2[0, :] = v2d_2[-1, :]
-p2d_2[0,] = p2d_2[-1, :]
+p2d_2[0, :] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
 xc_yc_2 = np.loadtxt("small_wave/mesh.dat")
@@ -248,17 +308,49 @@ yp2d_2 = np.delete(yp2d_2, -1, 1)
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d_2, y2d_2, xp2d_2, yp2d_2)
 
-# delete first/last row/col
-u2d_2 = np.delete(np.delete(u2d_2, [0,-1], 1), [0,-1], 0)
-v2d_2 = np.delete(np.delete(v2d_2, [0,-1], 1), [0,-1], 0)
-p2d_2 = np.delete(np.delete(p2d_2, [0,-1], 1), [0,-1], 0)
-k_DNS2d = np.delete(np.delete(k_DNS2d, [0,-1], 1), [0,-1], 0)
-uu2d_2 = np.delete(np.delete(uu2d_2, [0,-1], 1), [0,-1], 0)
-vv2d_2 = np.delete(np.delete(vv2d_2, [0,-1], 1), [0,-1], 0)
-ww2d_2 = np.delete(np.delete(ww2d_2, [0,-1], 1), [0,-1], 0)
-uv2d_2 = np.delete(np.delete(uv2d_2, [0,-1], 1), [0,-1], 0)
-eps_DNS2d_2 = np.delete(np.delete(eps_DNS2d_2, [0,-1], 1), [0,-1], 0)
+# delete last row
+u2d_2 = np.delete(u2d_2, -1, 0)
+v2d_2 = np.delete(v2d_2, -1, 0)
+p2d_2 = np.delete(p2d_2, -1, 0)
+k_DNS2d = np.delete(k_DNS2d, -1, 0)
+uu2d_2 = np.delete(uu2d_2, -1, 0)
+vv2d_2 = np.delete(vv2d_2, -1, 0)
+ww2d_2 = np.delete(ww2d_2, -1, 0)
+uv2d_2 = np.delete(uv2d_2, -1, 0)
+eps_DNS2d_2 = np.delete(eps_DNS2d_2, -1, 0)
 
+# delete first row
+u2d_2 = np.delete(u2d_2, 0, 0)
+v2d_2 = np.delete(v2d_2, 0, 0)
+p2d_2 = np.delete(p2d_2, 0, 0)
+k_DNS2d = np.delete(k_DNS2d, 0, 0)
+uu2d_2 = np.delete(uu2d_2, 0, 0)
+vv2d_2 = np.delete(vv2d_2, 0, 0)
+ww2d_2 = np.delete(ww2d_2, 0, 0)
+uv2d_2 = np.delete(uv2d_2, 0, 0)
+eps_DNS2d_2 = np.delete(eps_DNS2d_2, 0, 0)
+
+# delete last columns
+u2d_2 = np.delete(u2d_2, -1, 1)
+v2d_2 = np.delete(v2d_2, -1, 1)
+p2d_2 = np.delete(p2d_2, -1, 1)
+k_DNS2d = np.delete(k_DNS2d, -1, 1)
+uu2d_2 = np.delete(uu2d_2, -1, 1)
+vv2d_2 = np.delete(vv2d_2, -1, 1)
+ww2d_2 = np.delete(ww2d_2, -1, 1)
+uv2d_2 = np.delete(uv2d_2, -1, 1)
+eps_DNS2d_2 = np.delete(eps_DNS2d_2, -1, 1)
+
+# delete first columns
+u2d_2 = np.delete(u2d_2, 0, 1)
+v2d_2 = np.delete(v2d_2, 0, 1)
+p2d_2 = np.delete(p2d_2, 0, 1)
+k_DNS2d = np.delete(k_DNS2d, 0, 1)
+uu2d_2 = np.delete(uu2d_2, 0, 1)
+vv2d_2 = np.delete(vv2d_2, 0, 1)
+ww2d_2 = np.delete(ww2d_2, 0, 1)
+uv2d_2 = np.delete(uv2d_2, 0, 1)
+eps_DNS2d_2 = np.delete(eps_DNS2d_2, 0, 1)
 
 ni = ni - 2
 nj = nj - 2
@@ -287,7 +379,7 @@ print("Starting ML new case")
 omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
-cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
+# cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
 cmy_DNS_2 = np.where(cmy_DNS_2 > 0, cmy_DNS_2, 1)
 cmy_DNS_2 = np.where(cmy_DNS_2 <= 3, cmy_DNS_2, 1)
 
@@ -377,13 +469,14 @@ c_k_omega = [1] * len(cmy_DNS_2.flatten())
 # R2 score: This is pronounced as R-squared, and this score refers to the coefficient of determination.
 # This tells us how well the unknown samples will be predicted by our model.
 # The best possible score is 1.0, but the score can be negative as well.
+print("------------------------------------")
 print("Errors with machine-learning model:")
 print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-
+print("------------------------------------")
 print("Error with standard model:")
 print("Mean absolute error =",
       round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
@@ -413,21 +506,21 @@ plt.savefig("pictures/Modell_large_test_small_S_ij_model.png")
 # ----------------------------------------------Plot Cmy in domain----------------------------------------------
 # Fix dimensions of x and y, by deleting first row and column or last row and column
 
-x = np.delete(x, -1, 0)
+x2d = np.delete(x2d, -1, 0)
 # x2d = np.delete(x2d,  0,0)
-x = np.delete(x, -1, 1)
+x2d = np.delete(x2d, -1, 1)
 # x2d = np.delete(x2d,  0,1)
 
-y = np.delete(y, -1, 0)
+y2d = np.delete(y2d, -1, 0)
 # y2d = np.delete(y2d,  0,0)
-y = np.delete(y, -1, 1)
+y2d = np.delete(y2d, -1, 1)
 # y2d = np.delete(y2d,  0,1)
 
 # SHOULD PLOTS USE x2d or xp2d, y2d or xp2d (large/small)
 # plot the
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(xp, yp, cmy_DNS, 1000, cmap=plt.get_cmap("plasma")), ax=ax1, label="$C_\mu$")
+fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, 1000, cmap=plt.get_cmap("plasma")), ax=ax1, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS large) in the area $[x_0,x_n] x [y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -440,7 +533,7 @@ y_svr = np.reshape(y_svr, (ni, nj))
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax2,
-              label="$C_\mu$")  # y_svr
+              label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -514,9 +607,9 @@ plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
 plt.savefig("pictures/dvdy_in_domain.png")
 
-fig2, ax2 = plt.subplots()
+fig10, ax10 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$")  # y_svr
+fig10.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax10, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
