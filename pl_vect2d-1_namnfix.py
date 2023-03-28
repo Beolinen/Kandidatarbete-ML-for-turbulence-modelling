@@ -184,7 +184,7 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
-cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
+# cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
 cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
 cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
@@ -469,13 +469,14 @@ c_k_omega = [1] * len(cmy_DNS_2.flatten())
 # R2 score: This is pronounced as R-squared, and this score refers to the coefficient of determination.
 # This tells us how well the unknown samples will be predicted by our model.
 # The best possible score is 1.0, but the score can be negative as well.
+print("------------------------------------")
 print("Errors with machine-learning model:")
 print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
 print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-
+print("------------------------------------")
 print("Error with standard model:")
 print("Mean absolute error =",
       round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
@@ -608,7 +609,7 @@ plt.savefig("pictures/dvdy_in_domain.png")
 
 fig10, ax10 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig10.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax10, label="$C_\mu$")  # y_svr
+fig10.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax10, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
