@@ -108,7 +108,7 @@ areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d, y2d, xp2d,
 # delete first/last row/col
 u2d = np.delete(np.delete(u2d, [0,-1], 1), [0,-1], 0)
 v2d = np.delete(np.delete(v2d, [0,-1], 1), [0,-1], 0)
-p2d = np.delete(np.delete(p2d, [0,-1], 1), [0,-1], 0)
+p2d = np.delete(np.delete(p2d, [0,-1], 1), -[0,-1], 0)
 k2d = np.delete(np.delete(k2d, [0,-1], 1), [0,-1], 0)
 uu2d = np.delete(np.delete(uu2d, [0,-1], 1), [0,-1], 0)
 vv2d = np.delete(np.delete(vv2d, [0,-1], 1), [0,-1], 0)
