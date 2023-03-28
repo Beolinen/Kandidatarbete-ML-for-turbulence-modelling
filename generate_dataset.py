@@ -14,19 +14,12 @@ def one_method_to_do_it_all(path_k_eps_rans:str, path_tec:str, path_xc_yc:str,pa
     
     tec = np.genfromtxt(path_tec, dtype=None, comments="%").transpose()
 
-    x = tec[0]  # Cell center x
-    y = tec[1]  # Cell center y
-    p = tec[2]  # Pressure
-    u = tec[3]  # Instant/laminar velocity in x
-    v = tec[4]  # Instant/laminar velocity in y
-    uu = tec[5]  # Stress
-    vv = tec[6]  # Stress
-    ww = tec[7]  # Stress
-    uv = tec[8]  # Stress
-    eps_DNS = tec[9]  # Dissipation'
+    x,y,p,u,v,uu,vv,ww,uv,eps_DNS = tec[0],tec[1],tec[2],tec[3],tec[4],tec[5],tec[6],tec[7],tec[8],tec[9] 
     k_DNS = 0.5 * (uu + vv + ww)  # Turbulent kinetic energy (?)
-
+    
     ni,nj,nu = get_ni_nj(y,x)
+
+    viscos = nu
 
     u2d = np.reshape(u, (nj, ni)).transpose()
     v2d = np.reshape(v, (nj, ni)).transpose()
@@ -105,7 +98,16 @@ def one_method_to_do_it_all(path_k_eps_rans:str, path_tec:str, path_xc_yc:str,pa
     # y derivatives
     dudy = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
     dvdy = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
-        
+
+    omega = eps_DNS2d / k2d / 0.09
+
+    cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+    cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
+    cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
+    cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
+
+    duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+            
     return 0
 
 def get_ni_nj(y:np.array, x:np.array):
