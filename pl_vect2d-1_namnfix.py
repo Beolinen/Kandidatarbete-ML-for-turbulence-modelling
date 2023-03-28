@@ -1,3 +1,5 @@
+
+
 # ----------------------------------------------Import Packages------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,10 +9,11 @@ import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
 import time
 import sys
-
-# ----------------------------------------------Read Data Original Case----------------------------------------------
 import warnings
 import matplotlib.cbook
+warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+
+# ----------------------------------------------Read Data Original Case----------------------------------------------
 
 def dat_to_variable_arrays(path:str):
     tec = np.genfromtxt(path, dtype=None, comments="%").transpose()
@@ -36,8 +39,6 @@ def dat_to_variable_arrays(path:str):
 
     return x,y,p,u,v,uu,vv,ww,uv,eps_DNS,k_DNS,ni,nj
   
-
-
 def get_ni_nj(y:np.array, x:np.array):
     if max(y) == 1.:
         ni,nj = 170,194
@@ -49,8 +50,6 @@ def get_ni_nj(y:np.array, x:np.array):
         else:
             ni,nj = 402,162
     return nu,ni,nj    
-
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
