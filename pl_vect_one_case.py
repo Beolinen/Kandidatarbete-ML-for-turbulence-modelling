@@ -180,8 +180,10 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+cmy_DNS = cmy_DNS.flatten()
 
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+duidxj = duidxj.flatten()
 
 
 # create indices for all data
@@ -189,7 +191,7 @@ index = np.arange(0, len(cmy_DNS.flatten()), dtype=int)
 
 # number of elements of test data, 20%
 n_test = int(0.2 * len(cmy_DNS))
-print(n_test)
+
 # the rest is for training data
 n_svr = len(cmy_DNS) - n_test
 
@@ -209,7 +211,7 @@ duidxj_training = duidxj_training.reshape(-1, 1)
 scaler = StandardScaler()
 duidxj_training_scaled = scaler.fit_transform(duidxj_training)
 
-X = np.zeros(len(cmy_DNS), 1)
+X = np.zeros((len(cmy_training), 1))
 y = cmy_training
 X[:, 0] = duidxj_training_scaled[:, 0]
 
@@ -229,9 +231,14 @@ duidxj_test = duidxj_test.reshape(-1, 1)
 
 # Scale test data
 scaler2 = StandardScaler()
-duidxj_training_scaled = scaler2.fit_transform(duidxj_training)
+duidxj_test_scaled = scaler2.fit_transform(duidxj_test)
 
-X_test = np.zeros((n_test, 1))
-X_test[:, 0] = duidxj_training_scaled[:, 0]
+X_test = np.zeros((len(duidxj_test), 1))
+X_test[:, 0] = duidxj_test_scaled[:, 0]
 
-cmu_predict = model.predict(X_test)
+cmy_predict = model.predict(X_test)
+
+duidxj_training_no_scale = scaler2.inverse_transform(duidxj_test_scaled)
+
+errorML = (np.std(cmy_predict.flatten() - cmy_test.flatten())) / (np.mean(cmy_predict ** 2)) ** 0.5
+print('\nRMS error using ML turbulence model', errorML)
