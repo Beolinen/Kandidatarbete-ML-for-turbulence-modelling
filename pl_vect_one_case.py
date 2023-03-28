@@ -3,10 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR  # for building SVR model
-import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
 import time
-import sys
 import warnings
 import matplotlib.cbook
 # -------------------------------------------------start-------------------------------------------------
@@ -182,3 +180,58 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+
+duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+
+
+# create indices for all data
+index = np.arange(0, len(cmy_DNS.flatten()), dtype=int)
+
+# number of elements of test data, 20%
+n_test = int(0.2 * len(cmy_DNS))
+print(n_test)
+# the rest is for training data
+n_svr = len(cmy_DNS) - n_test
+
+# pick 20% elements randomly (test data)
+index_test = np.random.choice(index, size=n_test, replace=False)
+cmy_test = cmy_DNS[index_test]
+duidxj_test = duidxj[index_test]
+
+# delete testing data from 'all data' => training data
+cmy_training = np.delete(cmy_DNS, index_test)
+duidxj_training = np.delete(duidxj, index_test)
+
+# Reshape training data
+duidxj_training = duidxj_training.reshape(-1, 1)
+
+# Scale training data
+scaler = StandardScaler()
+duidxj_training_scaled = scaler.fit_transform(duidxj_training)
+
+X = np.zeros(len(cmy_DNS), 1)
+y = cmy_training
+X[:, 0] = duidxj_training_scaled[:, 0]
+
+print('starting SVR')
+
+# choose Machine Learning model
+C = 0.1
+eps = 0.001
+model = SVR(epsilon=eps, C=C)
+
+# Fit the model
+svr = model.fit(X, y.flatten())
+
+# Reshape test data
+cmy_test = cmy_test.reshape(-1, 1)
+duidxj_test = duidxj_test.reshape(-1, 1)
+
+# Scale test data
+scaler2 = StandardScaler()
+duidxj_training_scaled = scaler2.fit_transform(duidxj_training)
+
+X_test = np.zeros((n_test, 1))
+X_test[:, 0] = duidxj_training_scaled[:, 0]
+
+cmu_predict = model.predict(X_test)
