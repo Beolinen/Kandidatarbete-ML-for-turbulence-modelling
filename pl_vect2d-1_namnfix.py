@@ -379,7 +379,7 @@ print("Starting ML new case")
 omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
-cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
+# cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
 cmy_DNS_2 = np.where(cmy_DNS_2 > 0, cmy_DNS_2, 1)
 cmy_DNS_2 = np.where(cmy_DNS_2 <= 3, cmy_DNS_2, 1)
 
@@ -606,9 +606,9 @@ plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
 plt.savefig("pictures/dvdy_in_domain.png")
 
-fig2, ax2 = plt.subplots()
+fig10, ax10 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax2, label="$C_\mu$")  # y_svr
+fig10.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax10, label="$C_\mu$")  # y_svr
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
