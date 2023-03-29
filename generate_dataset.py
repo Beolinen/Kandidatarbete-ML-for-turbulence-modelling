@@ -10,9 +10,73 @@ import sys
 # give this one a new name later. the idea is to take the paths and use the 
 # (hopefully structured the exact same way) data and return a pandas datafrasme
 
-def one_method_to_do_it_all(path_tec:str):#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
+def one_method_to_do_it_all(path_tec:str, path_mesh:str):#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
     
     x,y,p,u,v,uu,vv,ww,uv,eps_DNS,k_DNS,ni,nj = dat_to_variable_arrays(path_tec)
+
+    # set Neumann of p at upper and lower boundaries
+    p[:, 1]  = p[:, 2]
+    p[:, -1] = p[:, -1 - 1]
+
+    # set periodic b.c on west boundary
+    # SHOULD WE USE THIS?
+    u[0, :]  = u[-1, :]
+    v[0, :]  = v[-1, :]
+    p[0, :]  = p[-1, :]
+    uu[0, :] = uu[-1, :]
+
+    # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
+    # load them
+    xc_yc = np.loadtxt(path_mesh)
+    xf = np.reshape(xc_yc[:, 0], (nj - 1, ni - 1)).transpose()
+    yf = np.reshape(xc_yc[:, 1], (nj - 1, ni - 1)).transpose()
+
+    # compute cell centers
+    xp = 0.25 * (x[0:-1, 0:-1] + x[0:-1, 1:] + x[1:, 0:-1] + x[1:, 1:])
+    yp = 0.25 * (y[0:-1, 0:-1] + y[0:-1, 1:] + y[1:, 0:-1] + y[1:, 1:])
+
+    # delete last row/col
+    x = np.delete(np.delete(x, -1, 1), -1, 0)
+    y = np.delete(np.delete(y, -1, 1), -1, 0)
+    xp = np.delete(np.delete(xp, -1, 1), -1, 0)
+    yp = np.delete(np.delete(yp, -1, 1), -1, 0)
+
+    # compute geometric quantities
+    areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x, y, xp, yp)
+
+
+    # delete first/last row/col
+    u       = np.delete(np.delete(u, [0,-1], 1), [0,-1], 0)
+    v       = np.delete(np.delete(v, [0,-1], 1), [0,-1], 0)
+    p       = np.delete(np.delete(p, [0,-1], 1), [0,-1], 0)
+    k_DNS   = np.delete(np.delete(k_DNS, [0,-1], 1), [0,-1], 0)
+    uu      = np.delete(np.delete(uu, [0,-1], 1), [0,-1], 0)
+    vv      = np.delete(np.delete(vv, [0,-1], 1), [0,-1], 0)
+    ww      = np.delete(np.delete(ww, [0,-1], 1), [0,-1], 0)
+    uv      = np.delete(np.delete(uv, [0,-1], 1), [0,-1], 0)
+    eps_DNS = np.delete(np.delete(eps_DNS, [0,-1], 1), [0,-1], 0)
+
+    ni -= 2
+    nj -= 2
+
+    # eps at last cell upper cell wrong. fix it.
+    eps_DNS[:, -1] = eps_DNS[:, -2]
+
+    # compute face value of U and V
+    u_face_w, u_face_s = compute_face_phi(u, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
+    v_face_w, v_face_s = compute_face_phi(v, fx, fy, ni, nj)
+
+    # x derivatives
+    dudx = dphidx(u_face_w, u_face_s, areawx, areasx, vol)
+    dvdx = dphidx(v_face_w, v_face_s, areawx, areasx, vol)
+
+    # y derivatives
+    dudy = dphidy(u_face_w, u_face_s, areawy, areasy, vol)
+    dvdy = dphidy(v_face_w, v_face_s, areawy, areasy, vol)
+
+    omega = eps_DNS / k_DNS / 0.09
+
+
 
     return 0
 
