@@ -91,7 +91,6 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'uv'    :uv.transpose().flatten(),
         'eps'   :eps.transpose().flatten(),
         'k'     :k.transpose().flatten(),
-
         },dtype=float)
 
 def dat_to_variable_arrays(path:str):
@@ -128,17 +127,3 @@ def get_ni_nj(path:str) -> tuple[float,int,int]:
     if path == "two_hills/tec.dat":
         return (1./10595.),402,162
     return 0,0,0
-
-# df = dat_to_df("large_wave/tec_large.dat", "large_wave/mesh.dat")
-
-# with pd.option_context('display.precision', 14):
-#     print(df)
-
-du,ni,nj = get_ni_nj("small_wave/tec.dat")
-print(du,ni,nj)
-du,ni,nj = get_ni_nj("large_wave/tec.dat")
-print(du,ni,nj)
-du,ni,nj = get_ni_nj("one_hill/tec.dat")
-print(du,ni,nj)
-du,ni,nj = get_ni_nj("two_hills/tec.dat")
-print(du,ni,nj)
