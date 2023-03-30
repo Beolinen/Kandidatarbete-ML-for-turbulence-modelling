@@ -8,7 +8,7 @@ from gradients import compute_face_phi, dphidx, dphidy, init
 import time
 import sys
 
-# TODO: Individual scaler for each input
+# TODO: Individual scaler for each input (Se limited-domain fil)
 # ----------------------------------------------Read Data Original Case----------------------------------------------
 import warnings
 import matplotlib.cbook
