@@ -78,7 +78,21 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
     omega = eps / k / 0.09
 
-    return pd.DataFrame({'x':x.transpose().flatten(),'y':y.transpose().flatten()})
+    return pd.DataFrame({
+        'dudx':dudx.transpose().flatten(),
+        'dvdx':dvdx.transpose().flatten(),
+        'dudy':dvdy.transpose().flatten(),
+        'dvdy':dudy.transpose().flatten(),
+        'p':p.transpose().flatten(),
+        'u':u.transpose().flatten(),
+        'v':v.transpose().flatten(),
+        'uu':uu.transpose().flatten(),
+        'vv':vv.transpose().flatten(),
+        'ww':ww.transpose().flatten(),
+        'uv':uv.transpose().flatten(),
+        'eps':eps.transpose().flatten(),
+        'k':k.transpose().flatten(),
+        },dtype=float)
 
 def dat_to_variable_arrays(path:str):
 
@@ -116,4 +130,7 @@ def get_ni_nj(path:str) -> tuple[float,int,int]:
     return 0,0,0
 
 df = dat_to_df("large_wave/tec_large.dat", "large_wave/mesh.dat")
-print(df)
+
+with pd.option_context('display.precision', 14):
+    print(df)
+
