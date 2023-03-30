@@ -1,12 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR  # for building SVR model
-import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
-import time
-import sys
 
 # give this one a new name later. the idea is to take the paths and use the 
 # (hopefully structured the exact same way) data and return a pandas datafrasme
@@ -27,36 +21,31 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
     p[0, :]  = p[-1, :]
     uu[0, :] = uu[-1, :]
 
-    # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
-    # load them
     xc_yc = np.loadtxt(path_mesh).transpose()
-    xf    = np.reshape(xc_yc[0], (nj - 1, ni - 1)).transpose()
-    yf    = np.reshape(xc_yc[1], (nj - 1, ni - 1)).transpose()
+    xf = np.reshape(xc_yc[0], (nj - 1, ni - 1)).transpose()
+    yf = np.reshape(xc_yc[1], (nj - 1, ni - 1)).transpose()
+
 
     # compute cell centers
-    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])
-    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])
-
-    #delete last row/col
-    x  = np.delete(np.delete(x,  -1, 1), -1, 0)
-    y  = np.delete(np.delete(y,  -1, 1), -1, 0)
-    xp = np.delete(np.delete(xp, -1, 1), -1, 0)
-    yp = np.delete(np.delete(yp, -1, 1), -1, 0)
+    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])  # Borde vara yf2d och xf2d
+    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])  # Borde vara yf2d och xf2d
 
     # compute geometric quantities
-    areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x, y, xp, yp)
+    areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf, yf, xp, yp)
 
 
     # delete first/last row/col
+    x   = np.delete(np.delete(x,   [0,-1], 1), [0,-1], 0)
+    y   = np.delete(np.delete(y,   [0,-1], 1), [0,-1], 0)
+    p   = np.delete(np.delete(p,   [0,-1], 1), [0,-1], 0)
     u   = np.delete(np.delete(u,   [0,-1], 1), [0,-1], 0)
     v   = np.delete(np.delete(v,   [0,-1], 1), [0,-1], 0)
-    p   = np.delete(np.delete(p,   [0,-1], 1), [0,-1], 0)
-    k   = np.delete(np.delete(k,   [0,-1], 1), [0,-1], 0)
     uu  = np.delete(np.delete(uu,  [0,-1], 1), [0,-1], 0)
     vv  = np.delete(np.delete(vv,  [0,-1], 1), [0,-1], 0)
     ww  = np.delete(np.delete(ww,  [0,-1], 1), [0,-1], 0)
     uv  = np.delete(np.delete(uv,  [0,-1], 1), [0,-1], 0)
     eps = np.delete(np.delete(eps, [0,-1], 1), [0,-1], 0)
+    k   = np.delete(np.delete(k,   [0,-1], 1), [0,-1], 0)
 
     ni -= 2
     nj -= 2
@@ -78,7 +67,7 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
     omega = eps / k / 0.09
 
-    cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+    cmy_DNS = np.array(-uv / (k * (dudy + dvdx)) * omega)
     cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
     cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
@@ -91,6 +80,8 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'dvdy'  :dudy.transpose().flatten(),
         'cmy'   :cmy_DNS.transpose().flatten(),
         'duidxj':duidxj.transpose().flatten(),
+        'x'     :x.transpose().flatten(),
+        'y'     :y.transpose().flatten(),
         'p'     :p.transpose().flatten(),
         'u'     :u.transpose().flatten(),
         'v'     :v.transpose().flatten(),
@@ -128,18 +119,26 @@ def dat_to_variable_arrays(path:str):
     return x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj
 
 def get_ni_nj(path:str) -> tuple[float,int,int]:
-
-    if path == "small_wave/tec.dat" or path == "large_wave/tec_large.dat":
+    if path == "small_wave/tec.dat":
         return 0.0001,170,194
-    if path == "one_hill/tec_OneHill.dat":
+    if path == "large_wave/tec.dat":
+        return 0.0001,170,194
+    if path == "one_hill/tec.dat":
         return (1./10595.),162,162
-    if path == "two_hills/tecTwoHills.dat":
+    if path == "two_hills/tec.dat":
         return (1./10595.),402,162
-
     return 0,0,0
 
-df = dat_to_df("large_wave/tec_large.dat", "large_wave/mesh.dat")
+# df = dat_to_df("large_wave/tec_large.dat", "large_wave/mesh.dat")
 
-with pd.option_context('display.precision', 14):
-    print(df)
+# with pd.option_context('display.precision', 14):
+#     print(df)
 
+du,ni,nj = get_ni_nj("small_wave/tec.dat")
+print(du,ni,nj)
+du,ni,nj = get_ni_nj("large_wave/tec.dat")
+print(du,ni,nj)
+du,ni,nj = get_ni_nj("one_hill/tec.dat")
+print(du,ni,nj)
+du,ni,nj = get_ni_nj("two_hills/tec.dat")
+print(du,ni,nj)
