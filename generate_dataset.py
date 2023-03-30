@@ -12,8 +12,7 @@ import sys
 # (hopefully structured the exact same way) data and return a pandas datafrasme
 
 
-
-def dat_to_df(path_tec:str, path_mesh:str):#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
+def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
     
     x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj = dat_to_variable_arrays(path_tec)
 
@@ -79,9 +78,7 @@ def dat_to_df(path_tec:str, path_mesh:str):#, path_xc_yc:str,path_mesh:str,path_
 
     omega = eps / k / 0.09
 
-    return pd.DataFrame({'x':x.flatten(),'y':y.flatten()})
-
-
+    return pd.DataFrame({'x':x.transpose().flatten(),'y':y.transpose().flatten()})
 
 def dat_to_variable_arrays(path:str):
 
@@ -108,7 +105,7 @@ def dat_to_variable_arrays(path:str):
     return x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj
 
 def get_ni_nj(path:str) -> tuple[float,int,int]:
-    
+
     if path == "small_wave/tec.dat" or path == "large_wave/tec_large.dat":
         return 0.0001,170,194
     if path == "one_hill/tec_OneHill.dat":
@@ -117,3 +114,6 @@ def get_ni_nj(path:str) -> tuple[float,int,int]:
         return (1./10595.),402,162
 
     return 0,0,0
+
+df = dat_to_df("large_wave/tec_large.dat", "large_wave/mesh.dat")
+print(df)
