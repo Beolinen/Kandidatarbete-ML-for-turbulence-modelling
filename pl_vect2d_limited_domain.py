@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-tec = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None, comments="%")
+tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
@@ -90,7 +90,7 @@ uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/mesh_large.dat")
+xc_yc = np.loadtxt("large_wave/mesh_large.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj - 1, ni - 1))
@@ -274,7 +274,7 @@ SVR = model.fit(X, Y.flatten())
 # ----------------------------------------------Read Data Large Case----------------------------------------------
 print("Reading new case")
 
-tec_large = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/tec.dat", dtype=None, comments="%")
+tec_large = np.genfromtxt("small_wave/tec.dat", dtype=None, comments="%")
 
 u_large = tec_large[:, 3]
 v_large = tec_large[:, 4]
@@ -324,7 +324,7 @@ v2d_large[0, :] = v2d_large[-1, :]
 p2d_large[0, :] = p2d_large[-1, :]
 uu2d_large[0, :] = uu2d_large[-1, :]
 
-xc_yc_large = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/mesh.dat")
+xc_yc_large = np.loadtxt("small_wave/mesh.dat")
 xf_large = xc_yc_large[:, 0]
 yf_large = xc_yc_large[:, 1]
 xf2d_large = np.reshape(xf_large, (nj - 1, ni - 1))
