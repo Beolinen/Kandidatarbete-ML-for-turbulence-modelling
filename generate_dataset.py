@@ -78,11 +78,16 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
     omega = eps / k / 0.09
 
+    cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+    cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
+    cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
+
     return pd.DataFrame({
         'dudx':dudx.transpose().flatten(),
         'dvdx':dvdx.transpose().flatten(),
         'dudy':dvdy.transpose().flatten(),
         'dvdy':dudy.transpose().flatten(),
+        'cmy':cmy_DNS.transpose().flatten()
         'p':p.transpose().flatten(),
         'u':u.transpose().flatten(),
         'v':v.transpose().flatten(),
@@ -92,6 +97,7 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'uv':uv.transpose().flatten(),
         'eps':eps.transpose().flatten(),
         'k':k.transpose().flatten(),
+
         },dtype=float)
 
 def dat_to_variable_arrays(path:str):
