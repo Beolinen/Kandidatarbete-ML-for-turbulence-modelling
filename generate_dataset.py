@@ -29,15 +29,15 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
     # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
     # load them
-    xc_yc = np.loadtxt(path_mesh)
-    xf    = np.reshape(xc_yc[:, 0], (nj - 1, ni - 1)).transpose()
-    yf    = np.reshape(xc_yc[:, 1], (nj - 1, ni - 1)).transpose()
+    xc_yc = np.loadtxt(path_mesh).transpose()
+    xf    = np.reshape(xc_yc[0], (nj - 1, ni - 1)).transpose()
+    yf    = np.reshape(xc_yc[1], (nj - 1, ni - 1)).transpose()
 
     # compute cell centers
-    xp = 0.25 * (x[0:-1, 0:-1] + x[0:-1, 1:] + x[1:, 0:-1] + x[1:, 1:])
-    yp = 0.25 * (y[0:-1, 0:-1] + y[0:-1, 1:] + y[1:, 0:-1] + y[1:, 1:])
+    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])
+    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])
 
-    # delete last row/col
+    #delete last row/col
     x  = np.delete(np.delete(x,  -1, 1), -1, 0)
     y  = np.delete(np.delete(y,  -1, 1), -1, 0)
     xp = np.delete(np.delete(xp, -1, 1), -1, 0)
@@ -82,21 +82,24 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
     cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
     cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 
+    duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+
     return pd.DataFrame({
-        'dudx':dudx.transpose().flatten(),
-        'dvdx':dvdx.transpose().flatten(),
-        'dudy':dvdy.transpose().flatten(),
-        'dvdy':dudy.transpose().flatten(),
-        'cmy':cmy_DNS.transpose().flatten()
-        'p':p.transpose().flatten(),
-        'u':u.transpose().flatten(),
-        'v':v.transpose().flatten(),
-        'uu':uu.transpose().flatten(),
-        'vv':vv.transpose().flatten(),
-        'ww':ww.transpose().flatten(),
-        'uv':uv.transpose().flatten(),
-        'eps':eps.transpose().flatten(),
-        'k':k.transpose().flatten(),
+        'dudx'  :dudx.transpose().flatten(),
+        'dvdx'  :dvdx.transpose().flatten(),
+        'dudy'  :dvdy.transpose().flatten(),
+        'dvdy'  :dudy.transpose().flatten(),
+        'cmy'   :cmy_DNS.transpose().flatten(),
+        'duidxj':duidxj.transpose().flatten(),
+        'p'     :p.transpose().flatten(),
+        'u'     :u.transpose().flatten(),
+        'v'     :v.transpose().flatten(),
+        'uu'    :uu.transpose().flatten(),
+        'vv'    :vv.transpose().flatten(),
+        'ww'    :ww.transpose().flatten(),
+        'uv'    :uv.transpose().flatten(),
+        'eps'   :eps.transpose().flatten(),
+        'k'     :k.transpose().flatten(),
 
         },dtype=float)
 
