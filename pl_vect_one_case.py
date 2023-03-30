@@ -180,6 +180,8 @@ omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+cmy_DNS = np.where(cmy_DNS < 0, 1, cmy_DNS)
+cmy_DNS = np.where(cmy_DNS > 2, 1, cmy_DNS)
 cmy_DNS = cmy_DNS.flatten()
 
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
@@ -212,13 +214,13 @@ scaler = StandardScaler()
 duidxj_training_scaled = scaler.fit_transform(duidxj_training)
 
 X = np.zeros((len(cmy_training), 1))
-y = cmy_training
+y = cmy_training.flatten()
 X[:, 0] = duidxj_training_scaled[:, 0]
 
 print('starting SVR')
 
 # choose Machine Learning model
-C = 0.1
+C = 10
 eps = 0.001
 model = SVR(epsilon=eps, C=C)
 
@@ -240,5 +242,15 @@ cmy_predict = model.predict(X_test)
 
 duidxj_training_no_scale = scaler2.inverse_transform(duidxj_test_scaled)
 
-errorML = (np.std(cmy_predict.flatten() - cmy_test.flatten())) / (np.mean(cmy_predict ** 2)) ** 0.5
+errorML = (np.std(cmy_predict.flatten() - cmy_test.flatten())) / (np.mean(cmy_predict.flatten() ** 2)) ** 0.5
 print('\nRMS error using ML turbulence model', errorML)
+
+errorOmega = (np.std(1 - cmy_test.flatten())) / (np.mean(1 ** 2)) ** 0.5
+print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
+
+plt.figure()
+x_plot = np.linspace(1, len(cmy_predict), len(cmy_predict))
+plt.scatter(x_plot, cmy_predict, label="predict", c="r")
+plt.scatter(x_plot, cmy_test, label="DNS", c="g")
+plt.legend()
+plt.show()
