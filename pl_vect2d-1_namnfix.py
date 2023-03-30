@@ -99,20 +99,8 @@ yf2d = np.transpose(yf2d)
 xp2d = 0.25 * (xf2d[0:-1, 0:-1] + xf2d[0:-1, 1:] + xf2d[1:, 0:-1] + xf2d[1:, 1:])  # Borde vara yf2d och xf2d
 yp2d = 0.25 * (yf2d[0:-1, 0:-1] + yf2d[0:-1, 1:] + yf2d[1:, 0:-1] + yf2d[1:, 1:])  # Borde vara yf2d och xf2d
 
-# delete last row
-x2d = np.delete(x2d, -1, 0)
-y2d = np.delete(y2d, -1, 0)
-# xp2d = np.delete(xp2d, -1, 0)
-# yp2d = np.delete(yp2d, -1, 0)
-
-# delete last columns
-x2d = np.delete(x2d, -1, 1)
-y2d = np.delete(y2d, -1, 1)
-# xp2d = np.delete(xp2d, -1, 1)
-# yp2d = np.delete(yp2d, -1, 1)
-
 # compute geometric quantities
-areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d, y2d, xp2d, yp2d)
+areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf2d, yf2d, xp2d, yp2d)
 
 # delete last row
 u2d = np.delete(u2d, -1, 0)
@@ -191,7 +179,7 @@ cmy_DNS = np.where(cmy_DNS <= 3, cmy_DNS, 1)
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
 # ML-metod
-scaler = StandardScaler() # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
+scaler = StandardScaler()  # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
 
 # Reshape Data
 duidxj = duidxj.reshape(-1, 1)
@@ -293,20 +281,8 @@ yf2d_2 = np.transpose(yf2d_2)
 xp2d_2 = 0.25 * (xf2d_2[0:-1, 0:-1] + xf2d_2[0:-1, 1:] + xf2d_2[1:, 0:-1] + xf2d_2[1:, 1:])
 yp2d_2 = 0.25 * (yf2d_2[0:-1, 0:-1] + yf2d_2[0:-1, 1:] + yf2d_2[1:, 0:-1] + yf2d_2[1:, 1:])
 
-# delete last row
-x2d_2 = np.delete(x2d_2, -1, 0)
-y2d_2 = np.delete(y2d_2, -1, 0)
-# xp2d_2 = np.delete(xp2d_2, -1, 0)
-# yp2d_2 = np.delete(yp2d_2, -1, 0)
-
-# delete last columns
-x2d_2 = np.delete(x2d_2, -1, 1)
-y2d_2 = np.delete(y2d_2, -1, 1)
-# xp2d_2 = np.delete(xp2d_2, -1, 1)
-# yp2d_2 = np.delete(yp2d_2, -1, 1)
-
 # compute geometric quantities
-areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(x2d_2, y2d_2, xp2d_2, yp2d_2)
+areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf2d_2, yf2d_2, xp2d_2, yp2d_2)
 
 # delete last row
 u2d_2 = np.delete(u2d_2, -1, 0)
