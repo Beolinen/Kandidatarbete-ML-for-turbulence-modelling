@@ -96,8 +96,8 @@ xf2d = np.transpose(xf2d)
 yf2d = np.transpose(yf2d)
 
 # compute cell centers
-xp2d = 0.25 * (x2d[0:-1, 0:-1] + x2d[0:-1, 1:] + x2d[1:, 0:-1] + x2d[1:, 1:])
-yp2d = 0.25 * (y2d[0:-1, 0:-1] + y2d[0:-1, 1:] + y2d[1:, 0:-1] + y2d[1:, 1:])
+xp2d = 0.25 * (x2d[0:-1, 0:-1] + x2d[0:-1, 1:] + x2d[1:, 0:-1] + x2d[1:, 1:])  # Borde vara yf2d och xf2d
+yp2d = 0.25 * (y2d[0:-1, 0:-1] + y2d[0:-1, 1:] + y2d[1:, 0:-1] + y2d[1:, 1:])  # Borde vara yf2d och xf2d
 
 # delete last row
 x2d = np.delete(x2d, -1, 0)
