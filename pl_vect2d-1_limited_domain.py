@@ -1,38 +1,42 @@
 # ----------------------------------------------Import Packages------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR  # for building SVR model
-import sklearn.metrics as sm
+from sklearn.svm import SVR
 from gradients import compute_face_phi, dphidx, dphidy, init
+from sklearn.metrics import mean_squared_error
+import sklearn.metrics as sm
 import time
-import sys
-
-# TODO: Individual scaler for each input (Se limited-domain fil)
-# ----------------------------------------------Read Data Original Case----------------------------------------------
 import warnings
 import matplotlib.cbook
+import sys
 
+# ----------------------------------------------Read Data Original Case----------------------------------------------
+
+# PROBLEMS START AT THESE VALUES
+# LIMITS LARGE CASE 90-COLUMN 163-ROW
+# LIMITS SMALL CASE 116-COLLUMN 135-ROW
 warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
+tec = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None, comments="%")
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
 # Define variables from text-file
-x = tec[:, 0]  # Cell center x
-y = tec[:, 1]  # Cell center y
-p = tec[:, 2]  # Pressure
-u = tec[:, 3]  # Instant/laminar velocity in x
-v = tec[:, 4]  # Instant/laminar velocity in y
-uu = tec[:, 5]  # Stress
-vv = tec[:, 6]  # Stress
-ww = tec[:, 7]  # Stress
-uv = tec[:, 8]  # Stress
-k_DNS = 0.5 * (uu + vv + ww)  # Turbulent kinetic energy (?)
-eps_DNS = tec[:, 9]  # Dissipation
+x = tec[:, 0]
+y = tec[:, 1]
+p = tec[:, 2]
+u = tec[:, 3]
+v = tec[:, 4]
+uu = tec[:, 5]
+vv = tec[:, 6]
+ww = tec[:, 7]
+uv = tec[:, 8]
+k_DNS = 0.5 * (uu + vv + ww)
+eps_DNS = tec[:, 9]
 
 # Define matrix dimensions
 if max(y) == 1.:
@@ -79,8 +83,6 @@ eps_DNS2d = np.transpose(eps_DNS2d)
 p2d[:, 1] = p2d[:, 2]
 p2d[:, -1] = p2d[:, -1 - 1]
 
-# set periodic b.c on west boundary
-# SHOULD WE USE THIS?
 u2d[0, :] = u2d[-1, :]
 v2d[0, :] = v2d[-1, :]
 p2d[0, :] = p2d[-1, :]
@@ -88,7 +90,7 @@ uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("large_wave/mesh_large.dat")
+xc_yc = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/mesh_large.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj - 1, ni - 1))
@@ -97,11 +99,19 @@ xf2d = np.transpose(xf2d)
 yf2d = np.transpose(yf2d)
 
 # compute cell centers
-xp2d = 0.25 * (xf2d[0:-1, 0:-1] + xf2d[0:-1, 1:] + xf2d[1:, 0:-1] + xf2d[1:, 1:])  # Borde vara yf2d och xf2d
-yp2d = 0.25 * (yf2d[0:-1, 0:-1] + yf2d[0:-1, 1:] + yf2d[1:, 0:-1] + yf2d[1:, 1:])  # Borde vara yf2d och xf2d
+xp2d = 0.25 * (xf2d[0:-1, 0:-1] + xf2d[0:-1, 1:] + xf2d[1:, 0:-1] + xf2d[1:, 1:])
+yp2d = 0.25 * (yf2d[0:-1, 0:-1] + yf2d[0:-1, 1:] + yf2d[1:, 0:-1] + yf2d[1:, 1:])
 
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf2d, yf2d, xp2d, yp2d)
+
+# delete last row
+# xp2d = np.delete(xp2d, -1, 0)
+# yp2d = np.delete(yp2d, -1, 0)
+
+# delete last columns
+# xp2d = np.delete(xp2d, -1, 1)
+# yp2d = np.delete(yp2d, -1, 1)
 
 # delete last row
 u2d = np.delete(u2d, -1, 0)
@@ -147,11 +157,17 @@ ww2d = np.delete(ww2d, 0, 1)
 uv2d = np.delete(uv2d, 0, 1)
 eps_DNS2d = np.delete(eps_DNS2d, 0, 1)
 
+xp2d = xp2d[:, -163::]
+yp2d = yp2d[:, -163::]
+
 ni = ni - 2
 nj = nj - 2
 
 # eps at last cell upper cell wrong. fix it.
 eps_DNS2d[:, -1] = eps_DNS2d[:, -2]
+
+print('new x2d.shape', x2d.shape)
+print('new u2d.shape', u2d.shape)
 
 # compute face value of U and V
 u2d_face_w, u2d_face_s = compute_face_phi(u2d, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
@@ -165,24 +181,40 @@ dvdx = dphidx(v2d_face_w, v2d_face_s, areawx, areasx, vol)
 dudy = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
 dvdy = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
 
-print("Data read")
-print("Starting ML")
 # ----------------------------------------------Project-Group Work---------------------------------------------------
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
+print("Data read")
+print("Starting ML")
+
 omega = eps_DNS2d / k2d / 0.09
 
 # Compute C_my and ||duidxj|| to train model
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
-# cmy_DNS = np.where(abs(dudy + dvdx) < 1, 1, cmy_DNS)
-cmy_DNS = np.where(cmy_DNS > 0, cmy_DNS, 1)
-cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
+cmy_DNS = cmy_DNS[:, -163::]
+
+# cmy_DNS = np.where(cmy_DNS > 3, 1, cmy_DNS)
+# cmy_DNS = np.where(cmy_DNS < 0, 1, cmy_DNS)
 
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+duidxj = duidxj[:, -163::]
+
+k2d = k2d[:, -163::]
+uv2d = uv2d[:, -163::]
+eps_DNS2d = eps_DNS2d[:, -163::]
+p2d = p2d[:, -163::]
+vv2d = vv2d[:, -163::]
+uu2d = uu2d[:, -163::]
 
 # ML-metod
-
-scaler = StandardScaler()  # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
-
+# The MinMaxScaler works by first computing the minimum and maximum values of each feature in the training data. 
+# It then scales the values of each feature such that the minimum value is mapped to 0 and the maximum value is mapped to 1.
+scaler1 = StandardScaler()
+scaler2 = StandardScaler()
+scaler3 = StandardScaler()
+scaler4 = StandardScaler()
+scaler5 = StandardScaler()
+scaler6 = StandardScaler()
+scaler7 = StandardScaler()
 
 # Reshape Data
 duidxj = duidxj.reshape(-1, 1)
@@ -194,13 +226,13 @@ vv2d_scaled_reshaped = vv2d.reshape(-1, 1)
 uu2d_scaled_reshaped = uu2d.reshape(-1, 1)
 
 # scale data
-duidxj_scaled = scaler.fit_transform(duidxj)
-k_scaled = scaler.fit_transform(k_scaled_reshaped)
-uv_scaled = scaler.fit_transform(uv_scaled_reshaped)
-eps_scaled = scaler.fit_transform(eps_scaled_reshaped)
-p2d_scaled = scaler.fit_transform(p2d_scaled_reshaped)
-vv2d_scaled = scaler.fit_transform(vv2d_scaled_reshaped)
-uu2d_scaled = scaler.fit_transform(uu2d_scaled_reshaped)
+duidxj_scaled = scaler1.fit_transform(duidxj)
+k_scaled = scaler2.fit_transform(k_scaled_reshaped)
+uv_scaled = scaler3.fit_transform(uv_scaled_reshaped)
+eps_scaled = scaler4.fit_transform(eps_scaled_reshaped)
+p2d_scaled = scaler5.fit_transform(p2d_scaled_reshaped)
+vv2d_scaled = scaler6.fit_transform(vv2d_scaled_reshaped)
+uu2d_scaled = scaler7.fit_transform(uu2d_scaled_reshaped)
 
 # 2 columns for 3D plot, 1 for 2D --> comment second column
 X = np.zeros((len(duidxj_scaled), 7))
@@ -214,14 +246,31 @@ X[:, 6] = uu2d_scaled[:, 0]
 
 Y = cmy_DNS
 
-# Choose model
+# plt.figure()
+# plt.plot(yp2d[-1,:],uv2d[-1,:], 'o')
+# plt.figure()
+# plt.plot(yp2d_2[-1,:],k_DNS2d[-1,:], 'b-')
+# plt.figure()
+# plt.plot(yp2d_2[-1,:],omega_2[-1,:], 'b--')
+# plt.figure()
+# plt.plot(yp2d_2[-1,:],dudy_2[-1,:], 'r-')
+# plt.figure()
+# plt.plot(yp2d_2[-1,:],dvdx_2[-1,:], 'k-')
+
+# plt.figure()
+# plt.plot(xp2d[:,-135::],cmy_DNS[:,-135::]) #rad -100 ger ickefysikaliska värden
+# plt.show()
+# sys.exit()
+
+# Fit model
 model = SVR(kernel='rbf', C=1, epsilon=0.001)
 SVR = model.fit(X, Y.flatten())
 
-print("Reading new case")
 # ----------------------------------------------Test With New Case------------------------------------------------
 # ----------------------------------------------Read Data Large Case----------------------------------------------
-tec_2 = np.genfromtxt("small_wave/tec.dat", dtype=None, comments="%")
+print("Reading new case")
+
+tec_2 = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/tec.dat", dtype=None, comments="%")
 
 u_2 = tec_2[:, 3]
 v_2 = tec_2[:, 4]
@@ -266,13 +315,12 @@ ww2d_2 = np.transpose(np.reshape(ww_2, (nj, ni)))
 p2d_2[:, 1] = p2d_2[:, 2]
 p2d_2[:, -1] = p2d_2[:, -1 - 1]
 
-# set periodic b.c on west boundary
 u2d_2[0, :] = u2d_2[-1, :]
 v2d_2[0, :] = v2d_2[-1, :]
 p2d_2[0, :] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
-xc_yc_2 = np.loadtxt("small_wave/mesh.dat")
+xc_yc_2 = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/mesh.dat")
 xf_2 = xc_yc_2[:, 0]
 yf_2 = xc_yc_2[:, 1]
 xf2d_2 = np.reshape(xf_2, (nj - 1, ni - 1))
@@ -286,6 +334,14 @@ yp2d_2 = 0.25 * (yf2d_2[0:-1, 0:-1] + yf2d_2[0:-1, 1:] + yf2d_2[1:, 0:-1] + yf2d
 
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf2d_2, yf2d_2, xp2d_2, yp2d_2)
+
+# delete last row
+# xp2d_2 = np.delete(xp2d_2, -1, 0)
+# yp2d_2 = np.delete(yp2d_2, -1, 0)
+
+# delete last columns
+# xp2d_2 = np.delete(xp2d_2, -1, 1)
+# yp2d_2 = np.delete(yp2d_2, -1, 1)
 
 # delete last row
 u2d_2 = np.delete(u2d_2, -1, 0)
@@ -331,11 +387,17 @@ ww2d_2 = np.delete(ww2d_2, 0, 1)
 uv2d_2 = np.delete(uv2d_2, 0, 1)
 eps_DNS2d_2 = np.delete(eps_DNS2d_2, 0, 1)
 
+# xp2d_2 = xp2d_2[:,-163::]
+# yp2d_2 = yp2d_2[:,-163::]
+
 ni = ni - 2
 nj = nj - 2
 
 # eps at last cell upper cell wrong. fix it.
 eps_DNS2d_2[:, -1] = eps_DNS2d_2[:, -2]
+
+print('new x2d.shape', x2d.shape)
+print('new u2d.shape', u2d.shape)
 
 # compute face value of U and V
 u2d_face_w, u2d_face_s = compute_face_phi(u2d_2, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
@@ -349,18 +411,17 @@ dvdx_2 = dphidx(v2d_face_w, v2d_face_s, areawx, areasx, vol)
 dudy_2 = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
 dvdy_2 = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
 
-print("Starting ML new case")
 # ----------------------------------------------ML-Method Large Case----------------------------------------------
-'''Reshape is used to fit arrays to the dimensions of the data.
-   scaler.fit_transform is used to scale the data to a range between 0 and 1.'''
+print("Starting ML new case")
 
 # Calculate correct C_my for prediction
 omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
-# cmy_DNS_large = np.where(abs(dudy_2 + dvdx_2) < 1, 1, cmy_DNS_2)
-cmy_DNS_2 = np.where(cmy_DNS_2 > 0, cmy_DNS_2, 1)
-cmy_DNS_2 = np.where(cmy_DNS_2 <= 2, cmy_DNS_2, 1)
+# cmy_DNS_2 = cmy_DNS_2[:,-163::]
+
+cmy_DNS_2 = np.where(cmy_DNS_2 > 2, 1, cmy_DNS_2)
+cmy_DNS_2 = np.where(cmy_DNS_2 < 0, 1, cmy_DNS_2)
 
 # plt.figure()
 # plt.plot(yp2d_2[-1,:],uv2d_2[-1,:], 'o')
@@ -372,14 +433,23 @@ cmy_DNS_2 = np.where(cmy_DNS_2 <= 2, cmy_DNS_2, 1)
 # plt.plot(yp2d_2[-1,:],dudy_2[-1,:], 'r-')
 # plt.figure()
 # plt.plot(yp2d_2[-1,:],dvdx_2[-1,:], 'k-')
-#
+
 # plt.figure()
 # plt.plot(yp2d_2[-100,:],cmy_DNS_2[-100,:], 'ro') #rad -100 ger ickefysikaliska värden
 # plt.show()
+# sys.exit()
 
 # np.array is used to convert the list to an array
-duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (
-        dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
+duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
+# duidxj_test = duidxj_test[:,-163::]
+
+# k_DNS2d = k_DNS2d[:,-163::]
+# uv2d_2 = uv2d_2[:,-163::]
+# eps_DNS2d_2 = eps_DNS2d_2[:,-163::]
+# p2d_2 = p2d_2[:,-163::]
+# vv2d_2 = vv2d_2[:,-163::]
+# uu2d_2 = uu2d_2[:,-163::]
+# ww2d_2 = ww2d_2[:,-163::]
 
 # Reshape data
 duidxj_test_reshape = duidxj_test.reshape(-1, 1)
@@ -391,13 +461,13 @@ vv2d_2_reshape = vv2d_2.reshape(-1, 1)
 uu2d_2_reshape = uu2d_2.reshape(-1, 1)
 
 # Scale data
-duidxj_test_scaled = scaler.fit_transform(duidxj_test_reshape)
-k_scaled_2 = scaler.fit_transform(k_scaled_reshape)
-uv_2_scaled = scaler.fit_transform(uv_2_reshape)
-eps_2_scaled = scaler.fit_transform(eps_2_reshape)
-p2d_2_scaled = scaler.fit_transform(p2d_2_reshape)
-vv2d_2_scale = scaler.fit_transform(vv2d_2_reshape)
-uu2d_2_scale = scaler.fit_transform(uu2d_2_reshape)
+duidxj_test_scaled = scaler1.transform(duidxj_test_reshape)
+k_scaled_2 = scaler2.transform(k_scaled_reshape)
+uv_2_scaled = scaler3.transform(uv_2_reshape)
+eps_2_scaled = scaler4.transform(eps_2_reshape)
+p2d_2_scaled = scaler5.transform(p2d_2_reshape)
+vv2d_2_scale = scaler6.transform(vv2d_2_reshape)
+uu2d_2_scale = scaler7.transform(uu2d_2_reshape)
 
 # x (ammount of input variables) columns for 3D plot, 1 for 2D --> comment second column, (k gives unrealistic results)
 X_test = np.zeros((len(duidxj_test_scaled), 7))
@@ -410,44 +480,44 @@ X_test[:, 5] = vv2d_2_scale[:, 0]
 X_test[:, 6] = uu2d_2_scale[:, 0]
 
 y_svr = model.predict(X_test)
+y_svr = np.reshape(y_svr, (ni, nj))
 
-X_test_no_scale = scaler.inverse_transform(X_test)
+intensity_2 = (uu2d_2 ** 2 + vv2d_2 ** 2 + ww2d_2 ** 2) ** 0.5
 
-print("Calculating error")
 # ----------------------------------------------Calculate Error----------------------------------------------
+print("Calculating error")
+
 errorML = (np.std(y_svr.flatten() - cmy_DNS_2.flatten())) / (np.mean(y_svr ** 2)) ** 0.5
 error = (np.std(0.09 - cmy_DNS_2.flatten())) / (np.mean(0.09 ** 2)) ** 0.5
-errorOmega = (np.std(1 - cmy_DNS_2.flatten())) / (np.mean(1 ** 2)) ** 0.5
+errorOmega = (np.std(1 - cmy_DNS_2.flatten())) / (np.mean((1) ** 2)) ** 0.5
 
 predictOwnCase = model.predict(X)
-errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNS.flatten())) / (np.mean(predictOwnCase ** 2)) ** 0.5
+# errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNS.flatten()))/(np.mean(predictOwnCase**2))**0.5
 
 # Print error
 print("Coefficient of varience med ML är", errorML)
 print("Coefficient of varience med standardmodell (C_my = 0.09) är", error)
 print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
-print("Coefficient of varience in fitting case is", errorOwnCase)
+# print("Coefficient of varience in fitting case is",errorOwnCase)
 
 # RMS ERROR
-c_k_eps = [0.09] * len(cmy_DNS_2.flatten())
-c_k_omega = [1] * len(cmy_DNS_2.flatten())
+c_k_eps = []
+c_k_omega = []
+for i in range(len(cmy_DNS_2.flatten())):
+    c_k_eps.append(0.09)
+    c_k_omega.append(1)
 
-# -------------------------------------Calculate Error with Sklearn metrics--------------------------------
-# Mean absolute error: This is the average of absolute errors of all the data points in the given dataset.
+errorRMS_ML = mean_squared_error(cmy_DNS_2.flatten(), y_svr.flatten())
+errorRMS = mean_squared_error(cmy_DNS_2.flatten(), c_k_eps)
+errorRMS_Omega = mean_squared_error(cmy_DNS_2.flatten(), c_k_omega)
+# errorRMS_Own_Case = mean_squared_error(cmy_DNS.flatten(), y_svr.flatten())
 
-# Mean squared error: This is the average of the squares of the errors of all the data points in the given dataset.
-# It is one of the most popular metrics out there!
+print("RMS-felet med ML är", errorRMS_ML)
+print("RMS-felet med standardmodell (C_my = 0.09) är", errorRMS)
+print("RMS-felet med standardmodell ,k-omega, (C_my = 1) är", errorRMS_Omega)
+# print("Error in fitting case is",errorRMS_Own_Case)
 
-# Median absolute error: This is the median of all the errors in the given dataset.
-# The main advantage of this metric is that it's robust to outliers.
-# A single bad point in the test dataset wouldn't skew the entire error metric, as opposed to a mean error metric.
-
-# Explained variance score: This score measures how well our model can account for the variation in our dataset.
-# A score of 1.0 indicates that our model is perfect.
-
-# R2 score: This is pronounced as R-squared, and this score refers to the coefficient of determination.
-# This tells us how well the unknown samples will be predicted by our model.
-# The best possible score is 1.0, but the score can be negative as well.
+# -------------------------------------Calculate Error with Sklearn metrics-------------------------------
 print("------------------------------------")
 print("Errors with machine-learning model:")
 print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
@@ -466,122 +536,71 @@ print("Median absolute error =",
 print("Explain variance score =",
       round(sm.explained_variance_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
 print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+
+# ----------------------------------------------Plot Solution----------------------------------------------
 et = time.process_time()
 print("Time elapsed: " + str(et - st))
 print("Plotting")
 
-# ----------------------------------------------Plot Solution----------------------------------------------
+# plt.figure("height restriction")
+# plt.plot(xp2d_2[:,-163],cmy_DNS_2[:,-163])
+# plt.xlabel("x [m]")
+# plt.ylabel("$C_{\mu}^{k-\omega}$")
+# plt.title("$C_\mu ^{k-\omega} \in [x_0,x_n]x[y_0,y_{lim}]$")
+# plt.savefig("C_my_domain_restricted_height")
+
+# plt.figure("width restriction")
+# plt.plot(yp2d_2[-90,:],cmy_DNS_2[-90,:])
+# plt.xlabel("y [m]")
+# plt.ylabel("$C_{\mu}^{k-\omega}$")
+# plt.title("$C_\mu ^{k-\omega} \in [x_{lim},x_n]x[y_0,y_n]$")
+# plt.savefig("C_my_domain_restricted_width")
+
 plt.figure("Test")
-
-plt.scatter(X_test_no_scale[:, 0], cmy_DNS_2, marker="o", s=10, c="green", label="Target")
-plt.scatter(X_test_no_scale[:, 0], y_svr, marker="o", s=10, c="blue", label="Prediction")
-plt.xlabel("$||S_{ij}||$")
+plt.scatter(yp2d_2, cmy_DNS_2, marker="o", s=10, c="green", label="Target")
+plt.scatter(yp2d_2, y_svr, marker="o", s=10, c="blue", label="Prediction")
 plt.ylabel("$C_{\mu}^{k-\omega}$")
-plt.title("$C_\mu^{k-\omega} = f( ||S_{i j}||,uv)$")
-
+plt.xlabel("y [m]")
+plt.title("$C_\mu^{k-\omega}$")
 plt.legend(loc="upper right", prop=dict(size=12))
-plt.savefig("pictures/Modell_large_test_small_S_ij_model.png")
+plt.savefig("Modell_2_test_small_2d.png")
 
-# ----------------------------------------------Plot Cmy in domain----------------------------------------------
+fig3d = plt.figure("3d-Test")
+ax = plt.axes(projection='3d')
+surf = ax.plot_surface(xp2d[:, -135::], yp2d[:, -135::], cmy_DNS[:, -135::], cmap=cm.coolwarm, label="Target")
+# ax.scatter(xp2d_2,yp2d_2,y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
+ax.set_xlabel("$x [m]$")
+ax.set_ylabel("$y [m]$")
+ax.set_zlabel("$C_\mu^{k-\omega}$")
+plt.title("$C_\mu^{k-\omega}$ 3d plot")
+fig3d.colorbar(surf, shrink=0.5, aspect=5)
+plt.savefig("Modell_2_test_small_3d.png")
 
-# SHOULD PLOTS USE x2d or xp2d, y2d or xp2d (large/small)
-# plot the
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, 1000, cmap=plt.get_cmap("plasma")), ax=ax1, label="$C_\mu$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $C_\mu$ (DNS large) in the area $[x_0,x_n] x [y_0,y_n]$")
+fig1.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000), ax=ax1, label="$C_\mu$")
+plt.axis([0, 4, -0.4, 1])
+plt.title("Values of $C_\mu$ (DNS) in the area $[x_{lim},x_n] x [y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("pictures/C_my_in_domain.png")
-
-# plot the 
-y_svr = np.reshape(y_svr, (ni, nj))
+plt.savefig("C_my_in_domain.png")
 
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax2,
-              label="$C_\mu$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
+fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000), ax=ax2, label="$C_\mu$")
+plt.axis([0, 4, -0.4, 1])
+plt.title("Values of $C_\mu$ (Prediction) in the area $[x_{lim},x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("pictures/C_my_pred_in_domain.png")
+plt.savefig("C_my_pred_in_domain_filter.png")
 
 fig3, ax3 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, abs(dudy_2 + dvdx_2), 1000, cmap=plt.get_cmap("plasma")), ax=ax3,
-              label="$||S_{ij}||$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $||S_{ij}||$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/S_ij_in_domain.png")
-
-fig4, ax4 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig4.colorbar(plt.contourf(xp2d_2, yp2d_2, u2d_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax4, label="$u(x,y)$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $u(x,y)$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/u_in_domain.png")
-
-fig5, ax5 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig5.colorbar(plt.contourf(xp2d_2, yp2d_2, v2d_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax5, label="$v(x,y)$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $v(x,y)$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/v_in_domain.png")
-
-fig6, ax6 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig6.colorbar(plt.contourf(xp2d_2, yp2d_2, dudy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax6,
-              label="$\partial u /\partial y$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $dudy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/dudy_in_domain.png")
-
-fig7, ax7 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig7.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdx_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax7,
-              label="$\partial v /\partial x$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $dvdx$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/dvdx_in_domain.png")
-
-fig8, ax8 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig8.colorbar(plt.contourf(xp2d_2, yp2d_2, uu2d_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax8, label="uu2d")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $uu$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/uu_in_domain.png")
-
-fig9, ax9 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig9.colorbar(plt.contourf(xp2d_2, yp2d_2, dvdy_2, 1000, cmap=plt.get_cmap("plasma")), ax=ax9,
-              label="$\partial v /\partial y$")
-plt.axis([0, 3.5, -0.4, 1])
+fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, intensity_2, 1000), ax=ax3, label="$\partial v /\partial y$")
+plt.axis([0, 4, -0.4, 1])
 plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("pictures/dvdy_in_domain.png")
-
-fig10, ax10 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig10.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000, cmap=plt.get_cmap("plasma")), ax=ax10, label="$C_\mu$")
-plt.axis([0, 3.5, -0.4, 1])
-plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("pictures/C_my_pred_in_domain.png")
+plt.savefig("dvdy_in_domain_filter.png")
 
 plt.show()
