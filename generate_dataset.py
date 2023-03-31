@@ -21,9 +21,9 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
     p[0, :]  = p[-1, :]
     uu[0, :] = uu[-1, :]
 
-    xc_yc = np.loadtxt(path_mesh).transpose()
-    xf = np.reshape(xc_yc[0], (nj - 1, ni - 1)).transpose()
-    yf = np.reshape(xc_yc[1], (nj - 1, ni - 1)).transpose()
+    mesh = np.loadtxt(path_mesh).transpose()
+    xf = np.reshape(mesh[0], (nj - 1, ni - 1)).transpose()
+    yf = np.reshape(mesh[1], (nj - 1, ni - 1)).transpose()
 
 
     # compute cell centers
@@ -83,10 +83,6 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'dvdy'  :dudy.transpose().flatten(),
         'cmy'   :cmy_DNS.transpose().flatten(),
         'duidxj':duidxj.transpose().flatten(),
-        # 'xf'    :xf.transpose().flatten(),
-        # 'yf'    :yf.transpose().flatten(),
-        # 'xp'    :xp.transpose().flatten(),
-        # 'yp'    :yp.transpose().flatten(),
         'x'     :x.transpose().flatten(),
         'y'     :y.transpose().flatten(),
         'p'     :p.transpose().flatten(),
@@ -98,7 +94,7 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'uv'    :uv.transpose().flatten(),
         'eps'   :eps.transpose().flatten(),
         'k'     :k.transpose().flatten(),
-        },dtype=float)
+        })
 
 def dat_to_variable_arrays(path:str):
 
