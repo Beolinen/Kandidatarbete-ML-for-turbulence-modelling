@@ -180,7 +180,9 @@ cmy_DNS = np.where(cmy_DNS <= 2, cmy_DNS, 1)
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
 # ML-metod
+
 scaler = StandardScaler()  # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
+
 
 # Reshape Data
 duidxj = duidxj.reshape(-1, 1)
