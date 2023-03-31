@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-tec = np.genfromtxt("large_wave/tec_large.dat", dtype=None, comments="%")
+tec = np.genfromtxt("large_wave/tec.dat", dtype=None, comments="%")
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
@@ -88,7 +88,7 @@ uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("large_wave/mesh_large.dat")
+xc_yc = np.loadtxt("large_wave/mesh.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj - 1, ni - 1))
