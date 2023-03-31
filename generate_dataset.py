@@ -27,8 +27,8 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
 
     # compute cell centers
-    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])  # Borde vara yf2d och xf2d
-    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])  # Borde vara yf2d och xf2d
+    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])  
+    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])  
 
     # compute geometric quantities
     areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf, yf, xp, yp)
@@ -73,6 +73,9 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
 
     duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
+    # print(xf.shape)
+    # print(x.shape)
+
     return pd.DataFrame({
         'dudx'  :dudx.transpose().flatten(),
         'dvdx'  :dvdx.transpose().flatten(),
@@ -80,6 +83,10 @@ def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,pat
         'dvdy'  :dudy.transpose().flatten(),
         'cmy'   :cmy_DNS.transpose().flatten(),
         'duidxj':duidxj.transpose().flatten(),
+        # 'xf'    :xf.transpose().flatten(),
+        # 'yf'    :yf.transpose().flatten(),
+        # 'xp'    :xp.transpose().flatten(),
+        # 'yp'    :yp.transpose().flatten(),
         'x'     :x.transpose().flatten(),
         'y'     :y.transpose().flatten(),
         'p'     :p.transpose().flatten(),
