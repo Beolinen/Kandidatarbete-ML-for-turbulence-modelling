@@ -4,8 +4,6 @@ from gradients import compute_face_phi, dphidx, dphidy, init
 
 # give this one a new name later. the idea is to take the paths and use the 
 # (hopefully structured the exact same way) data and return a pandas datafrasme
-
-
 def dat_to_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
     
     x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj = dat_to_variable_arrays(path_tec)
