@@ -66,8 +66,8 @@ def dat_2_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path
     omega = eps / k / 0.09
 
     cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
-    cmy = np.where(cmy > 0, cmy, 1)
-    cmy = np.where(cmy <= 3, cmy, 1)
+    # cmy = np.where(cmy > 0, cmy, 1)
+    # cmy = np.where(cmy <= 3, cmy, 1)
 
     duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
@@ -156,8 +156,8 @@ def dat_2_2d_arr(path_tec:str, path_mesh:str):
     omega = eps / k / 0.09
 
     cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
-    cmy = np.where(cmy > 0, cmy, 1)
-    cmy = np.where(cmy <= 3, cmy, 1)
+    # cmy = np.where(cmy > 0, cmy, 1)
+    # cmy = np.where(cmy <= 3, cmy, 1)
 
     duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
