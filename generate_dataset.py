@@ -4,8 +4,7 @@ from gradients import compute_face_phi, dphidx, dphidy, init
 
 # give this one a new name later. the idea is to take the paths and use the 
 # (hopefully structured the exact same way) data and return a pandas datafrasme
-def dat_2_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path_mesh:str,path_k_eps_rans:str):
-    
+def dat_2_dataset(path_tec:str, path_mesh:str, df:bool):
     x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj = dat_2_var_arr(path_tec)
 
     # set Neumann of p at upper and lower boundaries
@@ -30,7 +29,6 @@ def dat_2_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path
 
     # compute geometric quantities
     areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf, yf, xp, yp)
-
 
     # delete first/last row/col
     x   = np.delete(np.delete(x,   [0,-1], 1), [0,-1], 0)
@@ -66,15 +64,13 @@ def dat_2_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path
     omega = eps / k / 0.09
 
     cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
-    # cmy = np.where(cmy > 0, cmy, 1)
-    # cmy = np.where(cmy <= 3, cmy, 1)
+    cmy = np.where(cmy > 0, cmy, 1)
+    cmy = np.where(cmy <= 3, cmy, 1)
 
     duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
-    # print(xf.shape)
-    # print(x.shape)
-
-    return pd.DataFrame({
+    if(df):
+        return pd.DataFrame({
         'dudx'  :dudx.transpose().flatten(),
         'dvdx'  :dvdx.transpose().flatten(),
         'dudy'  :dvdy.transpose().flatten(),
@@ -94,72 +90,6 @@ def dat_2_df(path_tec:str, path_mesh:str) -> pd.DataFrame:#, path_xc_yc:str,path
         'k'     :k.transpose().flatten(),
         })
 
-def dat_2_2d_arr(path_tec:str, path_mesh:str):
-    
-    x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj = dat_2_var_arr(path_tec)
-
-    # set Neumann of p at upper and lower boundaries
-    p[:, 1]  = p[:, 2]
-    p[:, -1] = p[:, -1 - 1]
-
-    # set periodic b.c on west boundary
-    # SHOULD WE USE THIS?
-    u[0, :]  = u[-1, :]
-    v[0, :]  = v[-1, :]
-    p[0, :]  = p[-1, :]
-    uu[0, :] = uu[-1, :]
-
-    mesh = np.loadtxt(path_mesh).transpose()
-    xf = np.reshape(mesh[0], (nj - 1, ni - 1)).transpose()
-    yf = np.reshape(mesh[1], (nj - 1, ni - 1)).transpose()
-
-
-    # compute cell centers
-    xp = 0.25 * (xf[0:-1, 0:-1] + xf[0:-1, 1:] + xf[1:, 0:-1] + xf[1:, 1:])  
-    yp = 0.25 * (yf[0:-1, 0:-1] + yf[0:-1, 1:] + yf[1:, 0:-1] + yf[1:, 1:])  
-
-    # compute geometric quantities
-    areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf, yf, xp, yp)
-
-
-    # delete first/last row/col
-    x   = np.delete(np.delete(x,   [0,-1], 1), [0,-1], 0)
-    y   = np.delete(np.delete(y,   [0,-1], 1), [0,-1], 0)
-    p   = np.delete(np.delete(p,   [0,-1], 1), [0,-1], 0)
-    u   = np.delete(np.delete(u,   [0,-1], 1), [0,-1], 0)
-    v   = np.delete(np.delete(v,   [0,-1], 1), [0,-1], 0)
-    uu  = np.delete(np.delete(uu,  [0,-1], 1), [0,-1], 0)
-    vv  = np.delete(np.delete(vv,  [0,-1], 1), [0,-1], 0)
-    ww  = np.delete(np.delete(ww,  [0,-1], 1), [0,-1], 0)
-    uv  = np.delete(np.delete(uv,  [0,-1], 1), [0,-1], 0)
-    eps = np.delete(np.delete(eps, [0,-1], 1), [0,-1], 0)
-    k   = np.delete(np.delete(k,   [0,-1], 1), [0,-1], 0)
-
-    ni -= 2
-    nj -= 2
-
-    # eps at last cell upper cell wrong. fix it.
-    eps[:, -1] = eps[:, -2]
-
-    # compute face value of U and V
-    u_face_w, u_face_s = compute_face_phi(u, fx, fy, ni, nj)  # Error with dimensions for u2d vs fx,fy
-    v_face_w, v_face_s = compute_face_phi(v, fx, fy, ni, nj)
-
-    # x derivatives
-    dudx = dphidx(u_face_w, u_face_s, areawx, areasx, vol)
-    dvdx = dphidx(v_face_w, v_face_s, areawx, areasx, vol)
-
-    # y derivatives
-    dudy = dphidy(u_face_w, u_face_s, areawy, areasy, vol)
-    dvdy = dphidy(v_face_w, v_face_s, areawy, areasy, vol)
-
-    omega = eps / k / 0.09
-
-    cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
-    # cmy = np.where(cmy > 0, cmy, 1)
-    # cmy = np.where(cmy <= 3, cmy, 1)
-
-    duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
     return  dudx,dvdx,dudy,dvdy,cmy,duidxj,x,y,p,u,v,uu,vv,ww,uv,eps,k
 
