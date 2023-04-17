@@ -1,5 +1,9 @@
+#----------------Imports----------------
+
 import numpy as np
 import torch 
+
+#----------------Parameters----------------
 
 viscos=1/5200
 
@@ -37,8 +41,8 @@ ustar=(viscos*u[0]/y[0])**0.5
 yplus=y*ustar/viscos
 
 
-# Create matrixes and so on
-# -------------------------------------
+#-----------------Data_manipulation--------------------
+
 # Delete first value for all interesting data
 uv_DNS = np.delete(uv_DNS, 0)
 vv_DNS = np.delete(vv_DNS, 0)
@@ -49,23 +53,36 @@ k_DNS = np.delete(k_DNS, 0)
 eps_DNS = np.delete(eps_DNS, 0)
 dudy_DNS = np.delete(dudy_DNS, 0)
 
-#Calculate ny_t and time-scale tau
+# Calculate ny_t and time-scale tau
 viscous_t = k_DNS**2/eps_DNS 
 tau = viscous_t/abs(uv_DNS)
 
-#Calculate c_1,c_2,c_3
-for i in range(len(k_DNS)):
-    B_matrix = (1/12)*(tau[i]*dudy_DNS[i])**2*np.array([[1,6,1],[1,-6,1],[-2,0,-2]])
+# Calculate c_1, c_2, & c_3 of the Non-linear Eddy Viscosity Model
+# Array for storing c_1, c_2, & c_3
+c = np.zeros((3, len(k_DNS)))
 
-    a_matrix = np.array([[uu_DNS[i]**2/k_DNS[i] - 2/3],\
+for i in range(len(k_DNS)):
+    
+    # Equation 14.2
+    a_vector = np.array([[uu_DNS[i]**2/k_DNS[i] - 2/3],\
         [vv_DNS[i]**2/k_DNS[i] - 2/3],\
         [ww_DNS[i]**2/k_DNS[i] - 2/3]])
+    
+    # Equation 14.4
+    B_matrix = (1/12)*(tau[i]*dudy_DNS[i])**2*np.array([[1,6,1],[1,-6,1],[-2,0,-2]])
 
-    # print(B_matrix)
-    # print(a_vector)
-
-    c = np.linalg.solve(B_matrix, a_matrix)
-    print(c)
+    # Since B is a singular matrix, we use the pseudo-inverse to approximate c
+    B_pinv = np.linalg.pinv(B_matrix)
+    c[:,i] = np.dot(B_pinv, a_vector).flatten()
 
 
-#ML using pytorch to estimate c_1,c_2,c_3
+# Calculate c_1 average
+c_1_avg = np.mean(c[0,:])
+c_2_avg = np.mean(c[1,:])
+c_3_avg = np.mean(c[2,:])
+print("c_1 average: ", c_1_avg)
+print("c_2 average: ", c_2_avg)
+print("c_3 average: ", c_3_avg)
+
+
+# ML using pytorch to estimate c_1, c_2, & c_3
