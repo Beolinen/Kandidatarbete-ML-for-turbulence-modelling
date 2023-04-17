@@ -106,7 +106,7 @@ plt.ylabel("$U^+$")
 plt.xlabel("$y^+$")
 plt.axis([1, 5200, 0, 28])
 plt.legend(loc="best",fontsize=16)
-plt.savefig('u_log_5200-channel.png')
+plt.savefig('pictures/u_log_5200-channel.png')
 
 
 #************ uu
@@ -118,7 +118,7 @@ plt.axis([0, 10, 0, 5200])
 plt.xlabel("$\overline{u'u'}^+$")
 plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
-plt.savefig('uu_python.png')
+plt.savefig('pictures/uu_python.png')
 
 #************ vv
 fig2 = plt.figure()
@@ -130,7 +130,7 @@ plt.xlabel("$\overline{v'v'}^+$")
 plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
 plt.plot(vv_DNS,yplus_DNS,'r--')
-plt.savefig('vv_python.png')
+plt.savefig('pictures/vv_python.png')
 
 
 #************ ww
@@ -143,7 +143,7 @@ plt.xlabel("$\overline{v'v'}^+$")
 plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
 plt.plot(ww_DNS,yplus_DNS,'r--')
-plt.savefig('ww_python.png')
+plt.savefig('pictures/ww_python.png')
 
 
 #************ uv
@@ -155,5 +155,4 @@ plt.axis([-1, 0 , 0, 5200])
 plt.xlabel("$\overline{u'v'}^+$")
 plt.ylabel("$y^+$")
 plt.plot(uv_DNS,yplus_DNS,'r--')
-plt.savefig('uv_python.png')
-
+plt.savefig('pictures/uv_python.png')
