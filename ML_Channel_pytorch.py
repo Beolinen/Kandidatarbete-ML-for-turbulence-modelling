@@ -64,7 +64,6 @@ for i in range(len(k_DNS)):
     # print(B_matrix)
     # print(a_vector)
 
-    #try:  # Inte en bra lösning lol
     c = np.linalg.solve(B_matrix, a_matrix)
     print(c)
 
