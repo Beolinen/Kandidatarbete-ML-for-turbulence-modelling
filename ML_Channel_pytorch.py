@@ -45,6 +45,8 @@ diss1=0.09*k*om
 ustar=(viscos*u[0]/y[0])**0.5
 yplus=y*ustar/viscos
 
+# dont train on, uu, vv, ww, uv, uw, vw 
+
 #-----------------Data_manipulation--------------------
 
 # Delete first value for all interesting data
