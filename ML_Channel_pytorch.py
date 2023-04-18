@@ -2,8 +2,12 @@
 
 import numpy as np
 import torch 
+import matplotlib.pyplot as plt
+import warnings
+import matplotlib.cbook
 
 #----------------Parameters----------------
+warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 viscos=1/5200
 
@@ -52,6 +56,8 @@ vw_DNS = np.delete(vw_DNS,0)
 k_DNS = np.delete(k_DNS, 0)
 eps_DNS = np.delete(eps_DNS, 0)
 dudy_DNS = np.delete(dudy_DNS, 0)
+yplus_DNS = np.delete(yplus_DNS,0)
+uu_DNS = np.delete(uu_DNS,0)
 
 # Calculate ny_t and time-scale tau
 viscous_t = k_DNS**2/eps_DNS 
@@ -62,7 +68,7 @@ tau = viscous_t/abs(uv_DNS)
 c = np.zeros((3, len(k_DNS)))
 
 for i in range(len(k_DNS)):
-    
+
     # Equation 14.2
     a_vector = np.array([[uu_DNS[i]**2/k_DNS[i] - 2/3],\
         [vv_DNS[i]**2/k_DNS[i] - 2/3],\
@@ -86,3 +92,45 @@ print("c_3 average: ", c_3_avg)
 
 
 # ML using pytorch to estimate c_1, c_2, & c_3
+
+
+
+
+#Calculating target using approximation
+uu = (1/12)*(tau[i]*dudy_DNS[i])**2*(c[0,:] + 6*c[1,:] + c[2,:])
+vv = (1/12)*(tau[i]*dudy_DNS[i])**2*(c[0,:] - 6*c[1,:] + c[2,:])
+ww = (1/12)*(tau[i]*dudy_DNS[i])**2*(-2*c[0,:] - 2*c[2,:])
+
+
+#-----------------Plotting--------------------
+
+fig1 = plt.figure()
+plt.subplots_adjust(left=0.25,bottom=0.20)
+plt.plot(uu,yplus_DNS,'b-',label='RANS')
+plt.plot(uu_DNS,yplus_DNS,'r--',label='DNS')
+plt.axis([0, 10, 0, 5200])
+plt.xlabel("$\overline{u'u'}^+$")
+plt.ylabel("$y^+$")
+plt.legend(loc="best",fontsize=16)
+
+fig2 = plt.figure()
+plt.subplots_adjust(left=0.25,bottom=0.20)
+plt.plot(abs(vv),yplus_DNS,'b-',label='RANS')
+plt.plot(vv_DNS,yplus_DNS,'r--',label='DNS')
+plt.axis([0, 3, 0, 5200])
+plt.xlabel("$\overline{v'v'}^+$")
+plt.ylabel("$y^+$")
+plt.legend(loc="best",fontsize=16)
+
+fig3 = plt.figure()
+plt.subplots_adjust(left=0.25,bottom=0.20)
+plt.plot(abs(ww),yplus_DNS,'b-',label='RANS')
+plt.plot(ww_DNS,yplus_DNS,'r--',label='DNS')
+plt.axis([0, 3, 0, 5200])
+plt.xlabel("$\overline{w'w'}^+$")
+plt.ylabel("$y^+$")
+plt.legend(loc="best",fontsize=16)
+
+plt.show()
+
+#u'u' decent, w'w' decent, v'v' bad, not expected
