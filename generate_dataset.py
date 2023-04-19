@@ -64,8 +64,8 @@ def dat_2_dataset(path_tec:str, path_mesh:str, df:bool):
     omega = eps / k / 0.09
 
     cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
-    cmy = np.where(cmy > 0, cmy, 1)
-    cmy = np.where(cmy <= 3, cmy, 1)
+    # cmy = np.where(cmy > 0, cmy, 1)
+    # cmy = np.where(cmy <= 3, cmy, 1)
 
     duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 
