@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
 
 # read data file
 st = time.process_time()
-tec = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/tec_large.dat", dtype=None, comments="%")
+tec = np.genfromtxt("large_wave/tec.dat", dtype=None, comments="%")
 
 print("Starting script")
 # text='VARIABLES = X Y P U V u2 v2 w2 uv eps'
@@ -90,7 +90,7 @@ uu2d[0, :] = uu2d[-1, :]
 
 # x and y are fo the cell centers. The dphidx_dy routine needs the face coordinate, xf2d, yf2d
 # load them
-xc_yc = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/large_wave/mesh_large.dat")
+xc_yc = np.loadtxt("large_wave/mesh.dat")
 xf = xc_yc[:, 0]
 yf = xc_yc[:, 1]
 xf2d = np.reshape(xf, (nj - 1, ni - 1))
@@ -270,7 +270,7 @@ SVR = model.fit(X, Y.flatten())
 # ----------------------------------------------Read Data Large Case----------------------------------------------
 print("Reading new case")
 
-tec_2 = np.genfromtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/tec.dat", dtype=None, comments="%")
+tec_2 = np.genfromtxt("two_hills/tec.dat", dtype=None, comments="%")
 
 u_2 = tec_2[:, 3]
 v_2 = tec_2[:, 4]
@@ -320,7 +320,7 @@ v2d_2[0, :] = v2d_2[-1, :]
 p2d_2[0, :] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
-xc_yc_2 = np.loadtxt("/Users/benjaminjonsson/Programmering/Kandidat/small_wave/mesh.dat")
+xc_yc_2 = np.loadtxt("two_hills/mesh.dat")
 xf_2 = xc_yc_2[:, 0]
 yf_2 = xc_yc_2[:, 1]
 xf2d_2 = np.reshape(xf_2, (nj - 1, ni - 1))
@@ -420,8 +420,8 @@ omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
 # cmy_DNS_2 = cmy_DNS_2[:,-163::]
 
-cmy_DNS_2 = np.where(cmy_DNS_2 > 2, 1, cmy_DNS_2)
-cmy_DNS_2 = np.where(cmy_DNS_2 < 0, 1, cmy_DNS_2)
+# cmy_DNS_2 = np.where(cmy_DNS_2 > 2, 1, cmy_DNS_2)
+# cmy_DNS_2 = np.where(cmy_DNS_2 < 0, 1, cmy_DNS_2)
 
 # plt.figure()
 # plt.plot(yp2d_2[-1,:],uv2d_2[-1,:], 'o')
@@ -567,7 +567,7 @@ plt.savefig("Modell_2_test_small_2d.png")
 
 fig3d = plt.figure("3d-Test")
 ax = plt.axes(projection='3d')
-surf = ax.plot_surface(xp2d[:, -135::], yp2d[:, -135::], cmy_DNS[:, -135::], cmap=cm.coolwarm, label="Target")
+surf = ax.plot_surface(xp2d_2, yp2d_2, cmy_DNS_2, cmap=cm.coolwarm, label="Target")
 # ax.scatter(xp2d_2,yp2d_2,y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
 ax.set_xlabel("$x [m]$")
 ax.set_ylabel("$y [m]$")

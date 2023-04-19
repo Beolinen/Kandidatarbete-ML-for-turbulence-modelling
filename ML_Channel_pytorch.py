@@ -46,6 +46,7 @@ ustar=(viscos*u[0]/y[0])**0.5
 yplus=y*ustar/viscos
 
 # dont train on, uu, vv, ww, uv, uw, vw 
+# Maybe mixed terms are ok (just not uu,vv,ww)
 
 #-----------------Data_manipulation--------------------
 
