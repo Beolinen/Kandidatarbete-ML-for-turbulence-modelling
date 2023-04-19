@@ -7,8 +7,8 @@ import warnings
 import matplotlib.cbook
 
 #----------------Parameters----------------
-
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+#Ignore matplotlib deprecation warnings in output
+warnings.filterwarnings("ignore", category=matplotlib.MatplotlibDeprecationWarning)
 
 viscos=1/5200
 
