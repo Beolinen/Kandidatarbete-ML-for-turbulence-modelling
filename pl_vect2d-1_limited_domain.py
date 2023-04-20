@@ -1,7 +1,9 @@
 # ----------------------------------------------Import Packages------------------------------------------------------
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from matplotlib.collections import LineCollection
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from gradients import compute_face_phi, dphidx, dphidy, init
@@ -17,7 +19,7 @@ import sys
 # PROBLEMS START AT THESE VALUES
 # LIMITS LARGE CASE 90-COLUMN 163-ROW
 # LIMITS SMALL CASE 116-COLLUMN 135-ROW
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+warnings.filterwarnings("ignore", category=matplotlib.MatplotlibDeprecationWarning)
 
 # read data file
 st = time.process_time()
@@ -270,7 +272,7 @@ SVR = model.fit(X, Y.flatten())
 # ----------------------------------------------Read Data Large Case----------------------------------------------
 print("Reading new case")
 
-tec_2 = np.genfromtxt("two_hills/tec.dat", dtype=None, comments="%")
+tec_2 = np.genfromtxt("large_wave/tec.dat", dtype=None, comments="%")
 
 u_2 = tec_2[:, 3]
 v_2 = tec_2[:, 4]
@@ -320,7 +322,7 @@ v2d_2[0, :] = v2d_2[-1, :]
 p2d_2[0, :] = p2d_2[-1, :]
 uu2d_2[0, :] = uu2d_2[-1, :]
 
-xc_yc_2 = np.loadtxt("two_hills/mesh.dat")
+xc_yc_2 = np.loadtxt("large_wave/mesh.dat")
 xf_2 = xc_yc_2[:, 0]
 yf_2 = xc_yc_2[:, 1]
 xf2d_2 = np.reshape(xf_2, (nj - 1, ni - 1))
@@ -556,51 +558,78 @@ print("Plotting")
 # plt.title("$C_\mu ^{k-\omega} \in [x_{lim},x_n]x[y_0,y_n]$")
 # plt.savefig("C_my_domain_restricted_width")
 
-plt.figure("Test")
-plt.scatter(yp2d_2, cmy_DNS_2, marker="o", s=10, c="green", label="Target")
-plt.scatter(yp2d_2, y_svr, marker="o", s=10, c="blue", label="Prediction")
-plt.ylabel("$C_{\mu}^{k-\omega}$")
-plt.xlabel("y [m]")
-plt.title("$C_\mu^{k-\omega}$")
-plt.legend(loc="upper right", prop=dict(size=12))
-plt.savefig("Modell_2_test_small_2d.png")
+# plt.figure("Test")
+# plt.scatter(yp2d_2, cmy_DNS_2, marker="o", s=10, c="green", label="Target")
+# plt.scatter(yp2d_2, y_svr, marker="o", s=10, c="blue", label="Prediction")
+# plt.ylabel("$C_{\mu}^{k-\omega}$")
+# plt.xlabel("y [m]")
+# plt.title("$C_\mu^{k-\omega}$")
+# plt.legend(loc="upper right", prop=dict(size=12))
+# plt.savefig("Modell_2_test_small_2d.png")
 
-fig3d = plt.figure("3d-Test")
-ax = plt.axes(projection='3d')
-surf = ax.plot_surface(xp2d_2, yp2d_2, cmy_DNS_2, cmap=cm.coolwarm, label="Target")
-# ax.scatter(xp2d_2,yp2d_2,y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
-ax.set_xlabel("$x [m]$")
-ax.set_ylabel("$y [m]$")
-ax.set_zlabel("$C_\mu^{k-\omega}$")
-plt.title("$C_\mu^{k-\omega}$ 3d plot")
-fig3d.colorbar(surf, shrink=0.5, aspect=5)
-plt.savefig("Modell_2_test_small_3d.png")
+# fig3d = plt.figure("3d-Test")
+# ax = plt.axes(projection='3d')
+# surf = ax.plot_surface(xp2d_2, yp2d_2, cmy_DNS_2, cmap=cm.coolwarm, label="Target")
+# # ax.scatter(xp2d_2,yp2d_2,y_svr,marker = "o", s= 10, c = "blue", label = "Prediction")
+# ax.set_xlabel("$x [m]$")
+# ax.set_ylabel("$y [m]$")
+# ax.set_zlabel("$C_\mu^{k-\omega}$")
+# plt.title("$C_\mu^{k-\omega}$ 3d plot")
+# fig3d.colorbar(surf, shrink=0.5, aspect=5)
+# plt.savefig("Modell_2_test_small_3d.png")
 
-fig1, ax1 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000), ax=ax1, label="$C_\mu$")
-plt.axis([0, 4, -0.4, 1])
-plt.title("Values of $C_\mu$ (DNS) in the area $[x_{lim},x_n] x [y_0,y_n]$")
+# fig1, ax1 = plt.subplots()
+# plt.subplots_adjust(left=0.20, bottom=0.20)
+# fig1.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, 1000), ax=ax1, label="$C_\mu$")
+# plt.axis([0, 4, -0.4, 1])
+# plt.title("Values of $C_\mu$ (DNS) in the area $[x_{lim},x_n] x [y_0,y_n]$")
+# plt.xlabel("$x [m]$")
+# plt.ylabel("$y [m]$")
+# plt.savefig("C_my_in_domain.png")
+
+# fig2, ax2 = plt.subplots()
+# plt.subplots_adjust(left=0.20, bottom=0.20)
+# fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000), ax=ax2, label="$C_\mu$")
+# plt.axis([0, 4, -0.4, 1])
+# plt.title("Values of $C_\mu$ (Prediction) in the area $[x_{lim},x_n]$ x $[y_0,y_n]$")
+# plt.xlabel("$x [m]$")
+# plt.ylabel("$y [m]$")
+# plt.savefig("C_my_pred_in_domain_filter.png")
+
+# fig3, ax3 = plt.subplots()
+# plt.subplots_adjust(left=0.20, bottom=0.20)
+# fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, intensity_2, 1000), ax=ax3, label="$\partial v /\partial y$")
+# plt.axis([0, 4, -0.4, 1])
+# plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
+# plt.xlabel("$x [m]$")
+# plt.ylabel("$y [m]$")
+# plt.savefig("dvdy_in_domain_filter.png")
+
+
+#---------Mesh Plot---------
+connection_x = []
+connection_y = []
+print(ni)
+print(nj)
+#168x192
+for y in range(nj):
+    for x in range(ni-1):
+        connection_x.append([xp2d_2[x,y], xp2d_2[x+1,y]])
+        connection_y.append([yp2d_2[x,y], yp2d_2[x+1,y]])
+
+for x in range(ni):
+    for y in range(nj-1):
+        connection_x.append([xp2d_2[x,y],xp2d_2[x,y+1]])
+        connection_y.append([yp2d_2[x,y],yp2d_2[x,y+1]])
+
+line = np.transpose(np.array([connection_x,connection_y]))
+lines = LineCollection(line,linewidth = 0.3,alpha = 1,colors = 'k')
+
+fig4, ax4 = plt.subplots()
+plt.gca().add_collection(lines)
+plt.title("Mesh Plot, Case: Large Wave")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.savefig("C_my_in_domain.png")
-
-fig2, ax2 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, 1000), ax=ax2, label="$C_\mu$")
-plt.axis([0, 4, -0.4, 1])
-plt.title("Values of $C_\mu$ (Prediction) in the area $[x_{lim},x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("C_my_pred_in_domain_filter.png")
-
-fig3, ax3 = plt.subplots()
-plt.subplots_adjust(left=0.20, bottom=0.20)
-fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, intensity_2, 1000), ax=ax3, label="$\partial v /\partial y$")
-plt.axis([0, 4, -0.4, 1])
-plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-plt.xlabel("$x [m]$")
-plt.ylabel("$y [m]$")
-plt.savefig("dvdy_in_domain_filter.png")
+plt.savefig("plots/Mesh_Large_Wave.png")
 
 plt.show()
