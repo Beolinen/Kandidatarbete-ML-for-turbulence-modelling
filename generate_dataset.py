@@ -120,7 +120,7 @@ def dat_2_var_arr(path:str):
     vv  = tec[6]
     ww  = tec[7]
     uv  = tec[8]
-    eps = tec[9]
+    eps = tec[9] # /nu ??
 
     return x,y,p,u,v,uu,vv,ww,uv,eps,k,ni,nj
 
