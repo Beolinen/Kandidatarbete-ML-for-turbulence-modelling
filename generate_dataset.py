@@ -61,9 +61,16 @@ def dat_2_dataset(path_tec:str, path_mesh:str, df:bool):
     dudy = dphidy(u_face_w, u_face_s, areawy, areasy, vol)
     dvdy = dphidy(v_face_w, v_face_s, areawy, areasy, vol)
 
-    omega = eps / k / 0.09
+    # Alt. 1 ger bättre cmy
+    # vist_DNS=abs(uv)/dudy
+    # omega=(eps/0.09/vist_DNS)**0.5
+    # cmy = np.array(abs(uv) / (k * (dudy)) * omega)
 
+    # Alt. 2
+    omega = eps / k / 0.09
     cmy = np.array(-uv / (k * (dudy + dvdx)) * omega)
+    
+
     # cmy = np.where(cmy > 0, cmy, 1)
     # cmy = np.where(cmy <= 3, cmy, 1)
 
