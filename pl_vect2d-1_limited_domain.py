@@ -607,29 +607,54 @@ print("Plotting")
 
 
 #---------Mesh Plot---------
+fig4, ax4 = plt.subplots()
+
 connection_x = []
 connection_y = []
-print(ni)
-print(nj)
+
 #168x192
-for y in range(nj):
-    for x in range(ni-1):
-        connection_x.append([xp2d_2[x,y], xp2d_2[x+1,y]])
-        connection_y.append([yp2d_2[x,y], yp2d_2[x+1,y]])
+for i in range(nj):
+    connection_x = ([xp2d_2[::2,-i],xp2d_2[1::2,-i]])
+    connection_y = ([yp2d_2[::2,-i],yp2d_2[1::2,-i]])
 
-for x in range(ni):
-    for y in range(nj-1):
-        connection_x.append([xp2d_2[x,y],xp2d_2[x,y+1]])
-        connection_y.append([yp2d_2[x,y],yp2d_2[x,y+1]])
+    line = np.transpose(np.array([connection_x,connection_y]))
+    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+    plt.gca().add_collection(lines)
 
-line = np.transpose(np.array([connection_x,connection_y]))
-lines = LineCollection(line,linewidth = 0.3,alpha = 1,colors = 'k')
+for i in range(ni):
+    connection_x = ([xp2d_2[i,::2],xp2d_2[i,1::2]])
+    connection_y = ([yp2d_2[i,::2],yp2d_2[i,1::2]])
 
-fig4, ax4 = plt.subplots()
-plt.gca().add_collection(lines)
+    line = np.transpose(np.array([connection_x,connection_y]))
+    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+    plt.gca().add_collection(lines)
+
+xp2d_x = np.delete(xp2d_2,0,1)
+yp2d_x = np.delete(yp2d_2,0,1)
+
+for i in range(nj-1):
+    connection_x = ([xp2d_x[::2,-i],xp2d_x[1::2,-i]])
+    connection_y = ([yp2d_x[::2,-i],yp2d_x[1::2,-i]])
+
+    line = np.transpose(np.array([connection_x,connection_y]))
+    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+    plt.gca().add_collection(lines)
+
+xp2d_y = np.delete(xp2d_2,0,0)
+yp2d_y = np.delete(yp2d_2,0,0)
+
+for i in range(ni-1):
+    connection_x = ([xp2d_y[i,::2],xp2d_y[i,1::2]])
+    connection_y = ([yp2d_y[i,::2],yp2d_y[i,1::2]])
+
+    line = np.transpose(np.array([connection_x,connection_y]))
+    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+    plt.gca().add_collection(lines)
+
 plt.title("Mesh Plot, Case: Large Wave")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
+plt.axis([0, 4, -0.4, 1])
 plt.savefig("plots/Mesh_Large_Wave.png")
 
 plt.show()
