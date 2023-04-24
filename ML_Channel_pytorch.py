@@ -79,8 +79,9 @@ vv = ((1/12)*tau**2*dudy_DNS**2*(c_0 - 6*c_2) + 2/3)*k_DNS
 #-----------------Plotting--------------------
 fig1 = plt.figure()
 plt.subplots_adjust(left=0.25,bottom=0.20)
-plt.plot(vv,yplus_DNS)
-plt.plot(vv_DNS,yplus_DNS)
+plt.plot(vv,yplus_DNS,'b')
+plt.plot(vv_DNS,yplus_DNS,'r--')
+plt.axis([0, 1.5, 10,5000])
 plt.xlabel("$\overline{u'u'}^+$")
 plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
