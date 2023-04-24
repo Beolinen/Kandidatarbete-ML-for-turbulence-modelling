@@ -596,65 +596,60 @@ print("Plotting")
 # plt.ylabel("$y [m]$")
 # plt.savefig("C_my_pred_in_domain_filter.png")
 
-# fig3, ax3 = plt.subplots()
-# plt.subplots_adjust(left=0.20, bottom=0.20)
-# fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, intensity_2, 1000), ax=ax3, label="$\partial v /\partial y$")
-# plt.axis([0, 4, -0.4, 1])
-# plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
-# plt.xlabel("$x [m]$")
-# plt.ylabel("$y [m]$")
-# plt.savefig("dvdy_in_domain_filter.png")
-
-
-#---------Mesh Plot---------
-fig4, ax4 = plt.subplots()
-
-connection_x = []
-connection_y = []
-
-#168x192
-for i in range(nj):
-    connection_x = ([xp2d_2[::2,-i],xp2d_2[1::2,-i]])
-    connection_y = ([yp2d_2[::2,-i],yp2d_2[1::2,-i]])
-
-    line = np.transpose(np.array([connection_x,connection_y]))
-    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
-    plt.gca().add_collection(lines)
-
-for i in range(ni):
-    connection_x = ([xp2d_2[i,::2],xp2d_2[i,1::2]])
-    connection_y = ([yp2d_2[i,::2],yp2d_2[i,1::2]])
-
-    line = np.transpose(np.array([connection_x,connection_y]))
-    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
-    plt.gca().add_collection(lines)
-
-xp2d_x = np.delete(xp2d_2,0,1)
-yp2d_x = np.delete(yp2d_2,0,1)
-
-for i in range(nj-1):
-    connection_x = ([xp2d_x[::2,-i],xp2d_x[1::2,-i]])
-    connection_y = ([yp2d_x[::2,-i],yp2d_x[1::2,-i]])
-
-    line = np.transpose(np.array([connection_x,connection_y]))
-    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
-    plt.gca().add_collection(lines)
-
-xp2d_y = np.delete(xp2d_2,0,0)
-yp2d_y = np.delete(yp2d_2,0,0)
-
-for i in range(ni-1):
-    connection_x = ([xp2d_y[i,::2],xp2d_y[i,1::2]])
-    connection_y = ([yp2d_y[i,::2],yp2d_y[i,1::2]])
-
-    line = np.transpose(np.array([connection_x,connection_y]))
-    lines = LineCollection(line,linewidth = 0.3, colors = 'k')
-    plt.gca().add_collection(lines)
-
-plt.title("Mesh Plot, Case: Large Wave")
+fig3, ax3 = plt.subplots()
+plt.subplots_adjust(left=0.20, bottom=0.20)
+fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, intensity_2, 1000), ax=ax3,label="$\partial v /\partial y$")
+plt.axis([0, 4, -0.4, 1])
+plt.title("Values of $dvdy$ (DNS) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
-plt.axis([0, 4, -0.4, 1])
-plt.savefig("plots/Mesh_Large_Wave.png")
+plt.savefig("dvdy_in_domain_filter.png")
+
+
+#--------------------Mesh Plot----------------------
+# fig4, ax4 = plt.subplots()
+
+# connection_x = []
+# connection_y = []
+# line2 = []
+
+# #168x192
+# for i in range(nj):
+#     connection_x = ([xp2d_2[::2,-i],xp2d_2[1::2,-i]])
+#     connection_y = ([yp2d_2[::2,-i],yp2d_2[1::2,-i]])
+    
+#     connection_x2 = ([xp2d_2[1::2,-i],xp2d_2[2::2,-i]])
+#     connection_y2 = ([yp2d_2[1::2,-i],yp2d_2[2::2,-i]])
+
+#     line = np.transpose(np.array([connection_x,connection_y]))
+#     line2 = np.transpose(np.array([connection_x2,connection_y2]))
+
+#     lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+#     lines2 = LineCollection(line2,linewidth = 0.3, colors = 'k')
+
+#     plt.gca().add_collection(lines)
+#     plt.gca().add_collections(lines2)
+
+# for i in range(ni):
+#     connection_x = ([xp2d_2[i,::2],xp2d_2[i,1::2]])
+#     connection_y = ([yp2d_2[i,::2],yp2d_2[i,1::2]])
+
+#     connection_x2 = ([xp2d_2[i,1::2],xp2d_2[i,2::2]])
+#     connection_y2 = ([yp2d_2[i,1::2],yp2d_2[i,2::2]])
+
+#     line = np.transpose(np.array([connection_x,connection_y]))
+#     line2 = np.transpose(np.array([connection_x2,connection_y2]))
+
+#     lines = LineCollection(line,linewidth = 0.3, colors = 'k')
+#     lines2 = LineCollection(line2,linewidth = 0.3, colors = 'k')
+
+#     plt.gca().add_collection(lines)
+#     plt.gca().add_collection(lines2)
+
+# plt.title("Mesh Plot, Case: Large Wave")
+# plt.xlabel("$x [m]$")
+# plt.ylabel("$y [m]$")
+# plt.axis([0, 4, -0.4, 1])
+# plt.savefig("plots/Mesh_Large_Wave.png")
 
 plt.show()
