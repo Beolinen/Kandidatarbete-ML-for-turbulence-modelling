@@ -110,22 +110,3 @@ plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
 
 plt.show()
-
-
-
-#c_NN = y_val_tensor.detach().numpy()
-ww_NN = ((c_NN[:,0])*(tau**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_NN = ((1/12)*tau**2*dudy_DNS**2*((c_NN[:,0]) + 6*(c_NN[:,1])) + 2/3)*k_DNS
-vv_NN = ((1/12)*tau**2*dudy_DNS**2*((c_NN[:,0]) - 6*(c_NN[:,1])) + 2/3)*k_DNS
-
-
-fig1 = plt.figure()
-plt.subplots_adjust(left=0.25,bottom=0.20)
-plt.plot(uu,yplus_DNS,'b',label = "Approx")
-plt.plot(uu_DNS,yplus_DNS,'r--',label = "DNS")
-#plt.axis([0, 1.5, 10,5000])
-plt.xlabel("$\overline{u'u'}^+$")
-plt.ylabel("$y^+$")
-plt.legend(loc="best",fontsize=16)
-
-plt.show()
