@@ -31,7 +31,6 @@ k_DNS=0.5*(uu_DNS+vv_DNS+ww_DNS)
 
 DNS_RSTE=np.genfromtxt("LM_Channel_5200_RSTE_k_prof.dat",comments="%")
 eps_DNS=DNS_RSTE[:,7]/viscos # it is scaled with ustar**4/viscos
-
 # fix wall
 eps_DNS[0]=eps_DNS[1]
 
@@ -63,26 +62,50 @@ yplus_DNS = np.delete(yplus_DNS,0)
 uu_DNS = np.delete(uu_DNS,0)
 
 # Calculate ny_t and time-scale tau
-viscous_t = k_DNS**2/eps_DNS 
-tau = viscous_t/abs(uv_DNS)
+viscous_t = k_DNS**2/eps_DNS
+#tau = viscous_t/np.abs(uv_DNS)
+tau = (k_DNS/eps_DNS) #Keep this, dont expect "normal values" anymore because of this
+#tau = 1/omega_RANS RANS Time scale (better apparently) (0,13 instead of 0,8)
 
 # Calculate c_1, c_2 of the Non-linear Eddy Viscosity Model
 # Array for storing c_1, c_2, & c_3
 
-c_0 = -2*(ww_DNS/k_DNS - 2/3)/(tau**2*dudy_DNS**2)
-c_2 = 2*((ww_DNS/k_DNS - 2/3) + (uu_DNS/k_DNS - 2/3))/(tau**2*dudy_DNS**2)
+c_0 = -6*(ww_DNS/k_DNS - 2/3)/(tau**2*dudy_DNS**2)
+c_2 = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau**2*dudy_DNS**2)
 
-ww = (c_0*(tau**2*dudy_DNS**2)/(-2) + 2/3)*k_DNS
-uu = ((1/12)*tau**2*dudy_DNS**2*(c_0 + 6*c_2) + 2/3)*k_DNS
-vv = ((1/12)*tau**2*dudy_DNS**2*(c_0 - 6*c_2) + 2/3)*k_DNS
+#Way to get weighted mean
+# c_0konst = np.mean(np.trapz(c_0,y_DNS))
+# c_2konst = np.mean(np.trapz(c_2,y_DNS))
+
+ww = ((c_0)*(tau**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu = ((1/12)*tau**2*dudy_DNS**2*((c_0) + 6*(c_2)) + 2/3)*k_DNS
+vv = ((1/12)*tau**2*dudy_DNS**2*((c_0) - 6*(c_2)) + 2/3)*k_DNS
 
 #-----------------Plotting--------------------
 fig1 = plt.figure()
 plt.subplots_adjust(left=0.25,bottom=0.20)
-plt.plot(vv,yplus_DNS,'b')
-plt.plot(vv_DNS,yplus_DNS,'r--')
-plt.axis([0, 1.5, 10,5000])
+plt.plot(uu,yplus_DNS,'b',label = "Approx")
+plt.plot(uu_DNS,yplus_DNS,'r--',label = "DNS")
+#plt.axis([0, 1.5, 10,5000])
 plt.xlabel("$\overline{u'u'}^+$")
+plt.ylabel("$y^+$")
+plt.legend(loc="best",fontsize=16)
+
+fig2 = plt.figure()
+plt.subplots_adjust(left=0.25,bottom=0.20)
+plt.plot(vv,yplus_DNS,'b',label = "Approx")
+plt.plot(vv_DNS,yplus_DNS,'r--', label = "DNS")
+#plt.axis([0, 1.5, 10,5000])
+plt.xlabel("$\overline{v'v'}^+$")
+plt.ylabel("$y^+$")
+plt.legend(loc="best",fontsize=16)
+
+fig3 = plt.figure()
+plt.subplots_adjust(left=0.25,bottom=0.20)
+plt.plot(ww,yplus_DNS,'b', label = "Approx")
+plt.plot(ww_DNS,yplus_DNS,'r--', label = "DNS")
+#plt.axis([0, 1.5, 10,5000])
+plt.xlabel("$\overline{w'w'}^+$")
 plt.ylabel("$y^+$")
 plt.legend(loc="best",fontsize=16)
 
