@@ -151,7 +151,21 @@ c_2_RANS = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_rans_DNS**2*dudy
 c_0_PENG = -6*(ww_DNS/k_DNS - 2/3)/(tau_peng_DNS**2*dudy_DNS**2)
 c_2_PENG = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_peng_DNS**2*dudy_DNS**2)
 
+ww_tau_DNS = ((c_0_DNS)*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) + 6*(c_2_DNS)) + 2/3)*k_DNS
+vv_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) - 6*(c_2_DNS)) + 2/3)*k_DNS
 
+ww_tau_AKN = ((c_0_AKN)*(tau_akn_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_tau_AKN = ((1/12)*tau_akn_DNS**2*dudy_DNS**2*((c_0_AKN) + 6*(c_2_AKN)) + 2/3)*k_DNS
+vv_tau_AKN = ((1/12)*tau_akn_DNS**2*dudy_DNS**2*((c_0_AKN) - 6*(c_2_AKN)) + 2/3)*k_DNS
+
+ww_tau_RANS = ((c_0_RANS)*(tau_rans_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_tau_RANS = ((1/12)*tau_rans_DNS**2*dudy_DNS**2*((c_0_RANS) + 6*(c_2_RANS)) + 2/3)*k_DNS
+vv_tau_RANS = ((1/12)*tau_rans_DNS**2*dudy_DNS**2*((c_0_RANS) - 6*(c_2_RANS)) + 2/3)*k_DNS
+
+ww_tau_PENG = ((c_0_PENG)*(tau_peng_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_tau_PENG = ((1/12)*tau_peng_DNS**2*dudy_DNS**2*((c_0_PENG) + 6*(c_2_PENG)) + 2/3)*k_DNS
+vv_tau_PENG = ((1/12)*tau_peng_DNS**2*dudy_DNS**2*((c_0_PENG) - 6*(c_2_PENG)) + 2/3)*k_DNS
 
 def reshape_those_fuckers(*args):
     return [arg.reshape(-1,1) for arg in args]
@@ -243,49 +257,9 @@ def test_loop(dataloader, model, loss_fn):
 
     print(f"Avg loss: {test_loss:>8f} \n")
 
-# Instantiate a neural network
-neural_net = ThePredictionMachine()
-
-# Set up hyperparameters
-learning_rate = 1e-4
-epochs = 10000
-
-# Initialize the loss function
-loss_fn = nn.MSELoss()
-
-# Choose loss function, check out https://pytorch.org/docs/stable/optim.html for more info
-# In this case we choose Stocastic Gradient Descent
-optimizer = torch.optim.SGD(neural_net.parameters(), lr=learning_rate)
-
-
-for t in range(epochs):
-    print(f"Epoch {t+1}\n-------------------------------")
-    train_loop(train_loader, neural_net, loss_fn, optimizer)
-    test_loop(val_loader, neural_net, loss_fn)
-print("Done!")
-
-print(f"The random state used this run was {random_state}")
-preds = neural_net(X_val_tensor)
+model = torch.load("trained_models/nn_model_c0_c2.pt")
+preds = model(X_val_tensor)
 c_NN = preds.detach().numpy()
-print(f"Mean of c_0 from neural network {np.mean(c_NN[:,0])}")
-print(f"Mean of c_2 from neural network {np.mean(c_NN[:,1])}")
-
-torch.save(neural_net, "trained_models/nn_model_c0_c2.pt")
-ww_tau_DNS = ((c_0_DNS)*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) + 6*(c_2_DNS)) + 2/3)*k_DNS
-vv_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) - 6*(c_2_DNS)) + 2/3)*k_DNS
-
-ww_tau_AKN = ((c_0_AKN)*(tau_akn_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_tau_AKN = ((1/12)*tau_akn_DNS**2*dudy_DNS**2*((c_0_AKN) + 6*(c_2_AKN)) + 2/3)*k_DNS
-vv_tau_AKN = ((1/12)*tau_akn_DNS**2*dudy_DNS**2*((c_0_AKN) - 6*(c_2_AKN)) + 2/3)*k_DNS
-
-ww_tau_RANS = ((c_0_RANS)*(tau_rans_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_tau_RANS = ((1/12)*tau_rans_DNS**2*dudy_DNS**2*((c_0_RANS) + 6*(c_2_RANS)) + 2/3)*k_DNS
-vv_tau_RANS = ((1/12)*tau_rans_DNS**2*dudy_DNS**2*((c_0_RANS) - 6*(c_2_RANS)) + 2/3)*k_DNS
-
-ww_tau_PENG = ((c_0_PENG)*(tau_peng_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_tau_PENG = ((1/12)*tau_peng_DNS**2*dudy_DNS**2*((c_0_PENG) + 6*(c_2_PENG)) + 2/3)*k_DNS
-vv_tau_PENG = ((1/12)*tau_peng_DNS**2*dudy_DNS**2*((c_0_PENG) - 6*(c_2_PENG)) + 2/3)*k_DNS
 
 #tau, dudy, k, uu, vv, ww, yplus, c_0,c_2
 ww_NN = ((c_NN[:,0])*(test_var_val[:,0]**2*test_var_val[:,1]**2)/(-6) + 2/3)*test_var_val[:,2]
@@ -309,15 +283,16 @@ vv_NN_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) - 6*(c2)) 
 
 
 #-----------------Plotting--------------------
-fig1, (ax0,ax1,ax2)= plt.subplots(nrows = 3 ,ncols = 1, sharex = True, figsize = (12,6))
+fig1, (ax0,ax1,ax2)= plt.subplots(nrows = 3 ,ncols = 1, sharex = True, figsize = (6,9))
 ax0.scatter(test_var_val[:,3],test_var_val[:,6],s = 10, marker = "o",color = "r",label = "DNS")
 ax0.scatter(uu_const,test_var_val[:,6],s = 10,marker = "o", color = "b" ,label = "const c")
-ax0.scatter(uu_NN_const,test_var_val[:,6],s = 10,marker = "o", color = "m" ,label = "const c")
+ax0.scatter(uu_NN_const,test_var_val[:,6],s = 10,marker = "o", color = "m" ,label = "mean c from NN")
 ax0.scatter(uu_NN,test_var_val[:,6],s = 10,marker = "o", color = "k" ,label = "NN")
 
-ax0.axis([-10,10,0,5200])
-# ax0.xlabel("$\overline{u'u'}^+$")
-# ax0.ylabel("$y^+$")
+ax0.axis([-5,15,0,5200])
+ax0.set_xlabel("$\overline{u'u'}^+$")
+ax0.set_ylabel("$y^+$")
+ax0.set_title("Approximating Reynolds stresses using a Neural Network")
 ax0.legend(loc="best",fontsize=12)
 
 ax1.scatter(test_var_val[:,4],test_var_val[:,6],s = 10, marker = "o",color = "r",label = "DNS")
@@ -325,9 +300,10 @@ ax1.scatter(vv_const,test_var_val[:,6],s = 10,marker = "o", color = "b" ,label =
 ax1.scatter(vv_NN_const,test_var_val[:,6],s = 10,marker = "o", color = "m" ,label = "const c")
 ax1.scatter(vv_NN,test_var_val[:,6],s = 10,marker = "o", color = "k" ,label = "NN")
 
-ax1.axis([-10,10,0,5200])
-# ax1.xlabel("$\overline{v'v'}^+$")
-# ax1.ylabel("$y^+$")
+ax1.axis([-5,15,0,5200])
+ax1.set_xlabel("$\overline{v'v'}^+$")
+ax1.set_ylabel("$y^+$")
+# ax1.set_title("Approximating $\overline{v'v'}$")
 ax1.legend(loc="best",fontsize=12)
 
 ax2.scatter(test_var_val[:,5],test_var_val[:,6],s = 10, marker = "o",color = "r",label = "DNS")
@@ -335,26 +311,70 @@ ax2.scatter(ww_const,test_var_val[:,6],s = 10,marker = "o", color = "b" ,label =
 ax2.scatter(ww_NN_const,test_var_val[:,6],s = 10,marker = "o", color = "m" ,label = "const c")
 ax2.scatter(ww_NN,test_var_val[:,6],s = 10,marker = "o", color = "k" ,label = "NN")
 
-ax2.axis([-10,10,0,5200])
-# plt.xlabel("$\overline{w'w'}^+$")
-# plt.ylabel("$y^+$")
+ax2.axis([-5,15,0,5200])
+plt.ylabel("$y^+$")
 ax2.legend(loc="best",fontsize=12)
+# ax2.set_title("Approximating $\overline{w'w'}$")
+ax2.set_xlabel("$\overline{w'w'}$")
 fig1.savefig("plots/NN-model.png")
 
-fig2 = plt.figure()
-plt.scatter(test_var_val[:,7],test_var_val[:,6], s = 10,marker = "o", color = "r", label = "Target")
-plt.scatter(c_NN[:,0],test_var_val[:,6], s = 10,marker = "o", color = "b", label = "NN")
-plt.axis([-0.25,1,0,5000])
-plt.title("C_0")
-plt.legend(loc = "best", fontsize = 12)
-fig2.savefig("plots/c_0_res_nn.png")
+fig2, (ax3,ax4)= plt.subplots(nrows = 2, ncols = 1, sharex = True)
+ax3.scatter(test_var_val[:,7],test_var_val[:,6], s = 10,marker = "o", color = "r", label = "Target")
+ax3.scatter(c_NN[:,0],test_var_val[:,6], s = 10,marker = "o", color = "b", label = "NN")
+ax3.axis([-0.25,1,0,5000])
+ax3.set_title("Approximating $c_0$ and $c_2$ using Neural Network")
+ax3.set_xlabel("$c_0$")
+ax3.set_ylabel("$y^+$")
+ax3.legend(loc = "best", fontsize = 12)
+
+ax4.scatter(test_var_val[:,8],test_var_val[:,6], s = 10,marker = "o", color = "r", label = "Target")
+ax4.scatter(c_NN[:,1],test_var_val[:,6], s = 10,marker = "o", color = "b", label = "NN")
+ax4.axis([-0.25,1,0,5000])
+#ax4.set_title("Approximating $c_2$ using Neural Network")
+ax4.set_xlabel("$c_2$")
+ax4.set_ylabel("$y^+$")
+ax4.legend(loc = "best", fontsize = 12)
+fig2.savefig("plots/c_approximation_NN.png")
+
+#------------------------TEST WITH NEW DATA--------------------
+DNS_mean=np.genfromtxt("Re_theta_6500.prof",comments="%")
+y_DNS=DNS_mean[:,0]
+yplus_DNS=DNS_mean[:,1]
+u_DNS=DNS_mean[:,2]
+dudy_DNS=DNS_mean[:,19]
+
+uu_DNS = DNS_mean[:,15]
+vv_DNS = DNS_mean[:,16]
+ww_DNS = DNS_mean[:,17]
+
+k_DNS = k_DNS[:len(uu_DNS)]
+eps_DNS = eps_DNS[:len(uu_DNS)]
+tau_DNS = k_DNS/eps_DNS
+
+viscous = 535
+
+c_0_DNS = -6*(ww_DNS/k_DNS - 2/3)/(tau_DNS**2*dudy_DNS**2)
+c_2_DNS = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_DNS**2*dudy_DNS**2)
+
+dudy_squared_DNS = (dudy_DNS**2).reshape(-1,1)
+dudy_DNS = dudy_DNS.reshape(-1,1)
+dudy_squared_DNS_scaled = StandardScaler().fit_transform(dudy_squared_DNS)
+dudy_DNS_scaled = StandardScaler().fit_transform(dudy_DNS)
+X = np.concatenate((dudy_DNS,dudy_squared_DNS_scaled),axis=1)
+X_val_tensor = torch.tensor(X, dtype=torch.float32)
+
+preds2 = model(X_val_tensor)
+c_NN = preds2.detach().numpy()
+
+ww_NN = ((c_NN[:,0])*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_NN = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_NN[:,0]) + 6*(c_NN[:,1])) + 2/3)*k_DNS
+vv_NN = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_NN[:,0]) - 6*(c_NN[:,1])) + 2/3)*k_DNS
 
 fig3 = plt.figure()
-plt.scatter(test_var_val[:,8],test_var_val[:,6], s = 10,marker = "o", color = "r", label = "Target")
-plt.scatter(c_NN[:,1],test_var_val[:,6], s = 10,marker = "o", color = "b", label = "NN")
-plt.axis([-0.25,1,0,5000])
-plt.title("C_2")
-plt.legend(loc = "best", fontsize = 12)
-fig3.savefig("plots/c_2_res_nn.png")
-
+plt.scatter(c_0_DNS[7:-1:],yplus_DNS[7:-1:],s = 10, marker = "o",color = "r",label = "DNS")
+#plt.scatter((c_NN[:,0])[7:-1:],yplus_DNS[7:-1:],s = 10,marker = "o", color = "b" ,alpha = 0.5,label = "NN test")
+plt.xlabel("$\overline{u'u'}$")
+plt.ylabel("$y^+$")
+plt.title("Test of trained model")
+#plt.axis([0,10000,0,5200])
 plt.show()
