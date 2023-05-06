@@ -27,6 +27,7 @@ y_DNS=DNS_mean[:,0]
 yplus_DNS=DNS_mean[:,1]
 u_DNS=DNS_mean[:,2]
 dudy_DNS=np.gradient(u_DNS,y_DNS)
+#print(dudy_DNS)
 
 DNS_stress=np.genfromtxt("LM_Channel_5200_vel_fluc_prof.dat",comments="%")
 uu_DNS=DNS_stress[:,2]
@@ -337,44 +338,98 @@ ax4.legend(loc = "best", fontsize = 12)
 fig2.savefig("plots/c_approximation_NN.png")
 
 #------------------------TEST WITH NEW DATA--------------------
-DNS_mean=np.genfromtxt("Re_theta_6500.prof",comments="%")
+DNS_mean=np.genfromtxt("vel_11000_DNS.dat",comments="%")
 y_DNS=DNS_mean[:,0]
 yplus_DNS=DNS_mean[:,1]
 u_DNS=DNS_mean[:,2]
-dudy_DNS=DNS_mean[:,19]
+dudy_DNS= np.gradient(u_DNS,y_DNS)
 
-uu_DNS = DNS_mean[:,15]
-vv_DNS = DNS_mean[:,16]
-ww_DNS = DNS_mean[:,17]
+uu_DNS = DNS_mean[:,3]**2
+vv_DNS = DNS_mean[:,4]**2
+ww_DNS = DNS_mean[:,5]**2
+k_DNS = 0.5*(uu_DNS + vv_DNS + ww_DNS)
 
-k_DNS = k_DNS[:len(uu_DNS)]
-eps_DNS = eps_DNS[:len(uu_DNS)]
+DNS_stress=np.genfromtxt("bud_11000.prof",comments="%")
+eps_DNS = DNS_stress[:,4]
+
 tau_DNS = k_DNS/eps_DNS
 
-viscous = 535
+yplus_DNS = np.delete(yplus_DNS,0)
+dudy_DNS = np.delete(dudy_DNS,0)
+uu_DNS = np.delete(uu_DNS,0)
+vv_DNS = np.delete(vv_DNS,0)
+ww_DNS = np.delete(ww_DNS,0)
+k_DNS = np.delete(k_DNS,0)
+eps_DNS = np.delete(eps_DNS,0)
+tau_DNS = np.delete(tau_DNS,0)
 
-c_0_DNS = -6*(ww_DNS/k_DNS - 2/3)/(tau_DNS**2*dudy_DNS**2)
-c_2_DNS = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_DNS**2*dudy_DNS**2)
+yplus_DNS = np.delete(yplus_DNS,-1)
+dudy_DNS = np.delete(dudy_DNS,-1)
+uu_DNS = np.delete(uu_DNS,-1)
+vv_DNS = np.delete(vv_DNS,-1)
+ww_DNS = np.delete(ww_DNS,-1)
+k_DNS = np.delete(k_DNS,-1)
+eps_DNS = np.delete(eps_DNS,-1)
+tau_DNS = np.delete(tau_DNS,-1)
 
 dudy_squared_DNS = (dudy_DNS**2).reshape(-1,1)
 dudy_DNS = dudy_DNS.reshape(-1,1)
+
 dudy_squared_DNS_scaled = StandardScaler().fit_transform(dudy_squared_DNS)
 dudy_DNS_scaled = StandardScaler().fit_transform(dudy_DNS)
+
 X = np.concatenate((dudy_DNS,dudy_squared_DNS_scaled),axis=1)
 X_val_tensor = torch.tensor(X, dtype=torch.float32)
 
 preds2 = model(X_val_tensor)
 c_NN = preds2.detach().numpy()
 
-ww_NN = ((c_NN[:,0])*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
-uu_NN = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_NN[:,0]) + 6*(c_NN[:,1])) + 2/3)*k_DNS
-vv_NN = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_NN[:,0]) - 6*(c_NN[:,1])) + 2/3)*k_DNS
+c_0_DNS = -6*(ww_DNS/k_DNS - 2/3)/(tau_DNS**2*dudy_DNS[:,0]**2)
+c_2_DNS = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_DNS**2*dudy_DNS[:,0]**2)
+
+ww_NN = ((c_NN[:,0])*(tau_DNS**2*dudy_DNS[:,0]**2)/(-6) + 2/3)*k_DNS
+uu_NN = ((1/12)*tau_DNS**2*dudy_DNS[:,0]**2*((c_NN[:,0]) + 6*(c_NN[:,1])) + 2/3)*k_DNS
+vv_NN = ((1/12)*tau_DNS**2*dudy_DNS[:,0]**2*((c_NN[:,0]) - 6*(c_NN[:,1])) + 2/3)*k_DNS
+
+c0 = 0.16
+c2 = 0.11
+
+ww_const = ((c0)*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
+uu_const = ((1/12)*tau_DNS**2*dudy_DNS**2*((c0) + 6*(c2)) + 2/3)*k_DNS
+vv_const = ((1/12)*tau_DNS**2*dudy_DNS**2*((c0) - 6*(c2)) + 2/3)*k_DNS
+
+
 
 fig3 = plt.figure()
-plt.scatter(c_0_DNS[7:-1:],yplus_DNS[7:-1:],s = 10, marker = "o",color = "r",label = "DNS")
-#plt.scatter((c_NN[:,0])[7:-1:],yplus_DNS[7:-1:],s = 10,marker = "o", color = "b" ,alpha = 0.5,label = "NN test")
+plt.scatter(c_0_DNS,yplus_DNS,s = 15, marker = "o",color = "r",label = "DNS")
+plt.scatter(c_NN[:,0],yplus_DNS,s = 10,marker = "+", color = "k" ,alpha = 0.5,label = "NN test")
+plt.axis([0,1,0,7000])
 plt.xlabel("$\overline{u'u'}$")
 plt.ylabel("$y^+$")
 plt.title("Test of trained model")
-#plt.axis([0,10000,0,5200])
+
+
+# fig3 = plt.figure()
+# plt.scatter(uu_DNS,yplus_DNS,s = 15, marker = "o",color = "r",label = "DNS")
+# #plt.scatter(uu_NN,yplus_DNS,s = 10,marker = "+", color = "k" ,alpha = 0.5,label = "NN test")
+# #plt.axis([-1,1000,0,7000])
+# plt.xlabel("$\overline{u'u'}$")
+# plt.ylabel("$y^+$")
+# plt.title("Test of trained model")
+
+
+# fig4 = plt.figure()
+# plt.scatter(vv_DNS,yplus_DNS,s = 10, marker = "o",color = "r",label = "DNS")
+# #plt.scatter(vv_NN,yplus_DNS,s = 10,marker = "+", color = "k" ,alpha = 0.5,label = "NN test")
+# plt.xlabel("$\overline{v'v'}$")
+# plt.ylabel("$y^+$")
+# plt.title("Test of trained model")
+
+# fig5 = plt.figure()
+# plt.scatter(ww_DNS,yplus_DNS,s = 15, marker = "o",color = "r",label = "DNS")
+# #plt.scatter(ww_NN,yplus_DNS,s = 10,marker = "+", color = "k" ,alpha = 0.5,label = "NN test")
+# plt.xlabel("$\overline{v'v'}$")
+# plt.ylabel("$y^+$")
+# plt.title("Test of trained model")
+
 plt.show()
