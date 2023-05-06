@@ -143,6 +143,11 @@ cmu_error = np.std(cmu_predict - cmu_test) / \
             (np.mean(cmu_predict ** 2)) ** 0.5
 print('\nRMS error using ML turbulence model', cmu_error)
 
+cmu_std_error = np.std(1 - cmu_test) / \
+            (np.mean(1 ** 2)) ** 0.5
+
+print('\nRMS error using standard turbulence model', cmu_std_error)
+
 ########################################## uv 
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.25, bottom=0.20)
@@ -214,4 +219,6 @@ plt.ylabel(r"$C_\mu$")
 plt.xlabel("$y^+$")
 plt.axis([100, 2000, 0.6, 1.1])
 
+plt.figure()
+plt.plot(dudy_DNS,yplus_DNS)
 plt.show()
