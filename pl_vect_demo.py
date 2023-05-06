@@ -1,19 +1,11 @@
 # ----------------------------------------------Import Packages------------------------------------------------------
-import numpy as np
+import time
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR  # for building SVR model
-import sklearn.metrics as sm
 from gradients import compute_face_phi, dphidx, dphidy, init
-import time
-import sys
-
-# TODO: Individual scaler for each input (Se limited-domain fil)
-# ----------------------------------------------Read Data Original Case----------------------------------------------
-import warnings
-import matplotlib.cbook
-
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+import sklearn.metrics as sm
 
 # read data file
 st = time.process_time()
@@ -171,16 +163,26 @@ print("Starting ML")
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
 omega = eps_DNS2d / k2d / 0.09
 cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
-cmy_DNS[:,0] = 1
-
+cmy_DNS[:, 0] = 1
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+filterx = duidxj > 15
+
+
+cmy_DNSS = cmy_DNS[filterx]
+k2d = k2d[filterx]
+uv2d = uv2d[filterx]
+eps_DNS2d = eps_DNS2d[filterx]
+p2d = p2d[filterx]
+vv2d = vv2d[filterx]
+uu2d = uu2d[filterx]
+duidxj = duidxj[filterx]
 
 # Scaler
 scaler_duidxj = StandardScaler()  # I ML CHANNEL HAR ALLA INPUTS EGNA SCALERS
 scaler_k = StandardScaler()
 scaler_uv = StandardScaler()
 scaler_eps = StandardScaler()
-scaler_p2d =  StandardScaler()
+scaler_p2d = StandardScaler()
 scaler_vv = StandardScaler()
 scaler_uu = StandardScaler()
 
@@ -202,7 +204,6 @@ p2d_scaled = scaler_p2d.fit_transform(p2d_scaled_reshaped)
 vv2d_scaled = scaler_vv.fit_transform(vv2d_scaled_reshaped)
 uu2d_scaled = scaler_uu.fit_transform(uu2d_scaled_reshaped)
 
-
 X = np.zeros((len(duidxj_scaled), 7))
 X[:, 0] = duidxj_scaled[:, 0]  # Origanal training data
 X[:, 1] = uv_scaled[:, 0]  # Original training data
@@ -212,11 +213,11 @@ X[:, 4] = p2d_scaled[:, 0]
 X[:, 5] = vv2d_scaled[:, 0]
 X[:, 6] = uu2d_scaled[:, 0]
 
-Y = cmy_DNS
+Y = cmy_DNSS
 
 # Choose model
 
-model = SVR(kernel='rbf', C=0.1, epsilon=0.001)
+model = SVR(kernel='rbf', C=5, epsilon=0.01)
 SVR = model.fit(X, Y.flatten())
 
 print("Reading test case")
@@ -355,7 +356,7 @@ print("Starting ML on new case")
 # Calculate correct C_my for prediction
 omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
 cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
-cmy_DNS_2[:,0] = 1
+cmy_DNS_2[:, 0] = 1
 
 # np.array is used to convert the list to an array
 duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (
@@ -390,83 +391,56 @@ X_test[:, 5] = vv2d_2_scale[:, 0]
 X_test[:, 6] = uu2d_2_scale[:, 0]
 
 y_svr = SVR.predict(X_test)
+y_svr = np.reshape(y_svr, (ni, nj))
+
 
 X_test_no_scale = scaler_duidxj.inverse_transform(X_test)
 
 print("Calculating error")
 # ----------------------------------------------Calculate Error----------------------------------------------
-errorML = (np.std(y_svr.flatten() - cmy_DNS_2.flatten())) / (np.mean(y_svr ** 2)) ** 0.5
-error = (np.std(0.09 - cmy_DNS_2.flatten())) / (np.mean(0.09 ** 2)) ** 0.5
+errorML = (np.std(y_svr - cmy_DNS_2)) / (np.mean(y_svr ** 2)) ** 0.5
 errorOmega = (np.std(1 - cmy_DNS_2.flatten())) / (np.mean(1 ** 2)) ** 0.5
 
 predictOwnCase = SVR.predict(X)
-errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNS.flatten())) / (np.mean(predictOwnCase ** 2)) ** 0.5
+errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNSS.flatten())) / (np.mean(predictOwnCase ** 2)) ** 0.5
 
 # Print error
 print("Coefficient of varience med ML är", errorML)
-print("Coefficient of varience med standardmodell (C_my = 0.09) är", error)
 print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
 print("Coefficient of varience in fitting case is", errorOwnCase)
-
-# RMS ERROR
-# c_k_eps = [0.09] * len(cmy_DNS_2.flatten())
-# c_k_omega = [1] * len(cmy_DNS_2.flatten())
-
-# -------------------------------------Calculate Error with Sklearn metrics--------------------------------
-# print("------------------------------------")
-# print("Errors with machine-learning model:")
-# print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-# print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-# print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-# print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-# print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), y_svr.flatten()), 2))
-# print("------------------------------------")
-# print("Error with standard model:")
-# print("Mean absolute error =",
-#       round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-# print("Mean squared error =",
-#       round(sm.mean_squared_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-# print("Median absolute error =",
-#       round(sm.median_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-# print("Explain variance score =",
-#       round(sm.explained_variance_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-# print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-# et = time.process_time()
-# print("Time elapsed: " + str(et - st))
-# print("Plotting")
-
-# ----------------------------------------------Plot Solution----------------------------------------------
-# plt.figure("Test")
-
-# plt.scatter(X_test_no_scale[:, 0], cmy_DNS_2, marker="o", s=10, c="green", label="Target")
-# plt.scatter(X_test_no_scale[:, 0], y_svr, marker="o", s=10, c="blue", label="Prediction")
-# plt.xlabel("$||S_{ij}||$")
-# plt.ylabel("$C_{\mu}^{k-\omega}$")
-# plt.title("$C_\mu^{k-\omega} = f( ||S_{i j}||,uv)$")
-
-# plt.legend(loc="upper right", prop=dict(size=12))
-# plt.savefig("pictures/Modell_large_test_small_S_ij_model.png")
-
+print("------------------------------------")
+print("Errors with machine-learning model:")
+print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2, y_svr), 2))
+print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2, y_svr), 2))
+print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2, y_svr), 2))
+print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2, y_svr), 2))
+print("R2 score =", round(sm.r2_score(cmy_DNS_2, y_svr), 2))
+print("------------------------------------")
+print("Error with standard model:")
+print("Mean absolute error =",
+      round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Mean squared error =",
+      round(sm.mean_squared_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Median absolute error =",
+      round(sm.median_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("Explain variance score =",
+      round(sm.explained_variance_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
+print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
 # ----------------------------------------------Plot Cmy in domain----------------------------------------------
-cmy_range = np.linspace(-1,3,1000)
 jet = plt.get_cmap("jet")
-
 
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, levels=1000, cmap=jet), ax=ax1, label="$C_\mu$")
+fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, levels=np.linspace(-1, 5, 1000), cmap=jet), ax=ax1, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS large) in the area $[x_0,x_n] x [y_0,y_n]$")
 plt.xlabel("$x [m]$")
 plt.ylabel("$y [m]$")
 
-# plot the 
-y_svr = np.reshape(y_svr, (ni, nj))
-
+# plot the
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, levels=1000, cmap=jet), ax=ax2,
-              label="$C_\mu$")
+fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, levels=np.linspace(-1, 5, 1000), cmap=jet), ax=ax2, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -474,7 +448,7 @@ plt.ylabel("$y [m]$")
 
 fig3, ax3 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig3.colorbar(plt.pcolormesh(xp2d_2, yp2d_2, y_svr, vmin=0, vmax=3, cmap=jet), ax=ax3, label="$C_\mu$")
+fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, levels=1000, cmap=jet), ax=ax3, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
