@@ -161,8 +161,13 @@ print("Data read")
 print("Starting ML")
 # ----------------------------------------------Project-Group Work---------------------------------------------------
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
-omega = eps_DNS2d / k2d / 0.09
-cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
+vist_DNS = abs(uv2d) / dudy
+omega_DNS = (eps_DNS2d / 0.09 / vist_DNS) ** 0.5
+cmy_DNS = abs(uv2d) / (k2d * dudy) * omega_DNS
+cmy_DNS = np.nan_to_num(cmy_DNS, posinf=1, neginf=1)
+
+# omega = eps_DNS2d / k2d / 0.09
+# cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
 cmy_DNS[:, 0] = 1
 duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 filterx = duidxj > 15
@@ -217,7 +222,7 @@ Y = cmy_DNSS
 
 # Choose model
 
-model = SVR(kernel='rbf', C=5, epsilon=0.01)
+model = SVR(kernel='rbf', C=100, epsilon=0.01)
 SVR = model.fit(X, Y.flatten())
 
 print("Reading test case")
@@ -354,8 +359,13 @@ dvdy_2 = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
 print("Starting ML on new case")
 # ----------------------------------------------ML-Method Large Case----------------------------------------------
 # Calculate correct C_my for prediction
-omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
-cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
+vist_DNS_2 = abs(uv2d_2) / dudy_2
+omega_DNS_2 = (eps_DNS2d_2 / 0.09 / vist_DNS_2) ** 0.5
+cmy_DNS_2 = abs(uv2d_2) / (k_DNS2d * dudy_2) * omega_DNS_2
+cmy_DNS_2 = np.nan_to_num(cmy_DNS_2, posinf=1, neginf=1)
+
+# omega_2 = eps_DNS2d_2 / k_DNS2d / 0.09
+# cmy_DNS_2 = np.array(-uv2d_2 / (k_DNS2d * (dudy_2 + dvdx_2)) * omega_2)
 cmy_DNS_2[:, 0] = 1
 
 # np.array is used to convert the list to an array
@@ -405,33 +415,17 @@ predictOwnCase = SVR.predict(X)
 errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNSS.flatten())) / (np.mean(predictOwnCase ** 2)) ** 0.5
 
 # Print error
+print("------------------------------------")
 print("Coefficient of varience med ML är", errorML)
 print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
 print("Coefficient of varience in fitting case is", errorOwnCase)
 print("------------------------------------")
-print("Errors with machine-learning model:")
-print("Mean absolute error =", round(sm.mean_absolute_error(cmy_DNS_2, y_svr), 2))
-print("Mean squared error =", round(sm.mean_squared_error(cmy_DNS_2, y_svr), 2))
-print("Median absolute error =", round(sm.median_absolute_error(cmy_DNS_2, y_svr), 2))
-print("Explain variance score =", round(sm.explained_variance_score(cmy_DNS_2, y_svr), 2))
-print("R2 score =", round(sm.r2_score(cmy_DNS_2, y_svr), 2))
-print("------------------------------------")
-print("Error with standard model:")
-print("Mean absolute error =",
-      round(sm.mean_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-print("Mean squared error =",
-      round(sm.mean_squared_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-print("Median absolute error =",
-      round(sm.median_absolute_error(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-print("Explain variance score =",
-      round(sm.explained_variance_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
-print("R2 score =", round(sm.r2_score(cmy_DNS_2.flatten(), [1] * len(cmy_DNS_2.flatten())), 2))
 # ----------------------------------------------Plot Cmy in domain----------------------------------------------
 jet = plt.get_cmap("jet")
 
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, levels=np.linspace(-1, 5, 1000), cmap=jet), ax=ax1, label="$C_\mu$")
+fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, levels=1000, cmap=jet), ax=ax1, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS large) in the area $[x_0,x_n] x [y_0,y_n]$")
 plt.xlabel("$x [m]$")
@@ -440,7 +434,7 @@ plt.ylabel("$y [m]$")
 # plot the
 fig2, ax2 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, levels=np.linspace(-1, 5, 1000), cmap=jet), ax=ax2, label="$C_\mu$")
+fig2.colorbar(plt.contourf(xp2d_2, yp2d_2, cmy_DNS_2, levels=1000, cmap=jet), ax=ax2, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (DNS small) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
