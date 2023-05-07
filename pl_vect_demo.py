@@ -161,7 +161,9 @@ print("Data read")
 print("Starting ML")
 # ----------------------------------------------Project-Group Work---------------------------------------------------
 # ----------------------------------------------ML-Method Original Case----------------------------------------------
-vist_DNS = abs(uv2d) / dudy
+duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
+
+vist_DNS = abs(uv2d) / (dudx + dvdx)
 omega_DNS = (eps_DNS2d / 0.09 / vist_DNS) ** 0.5
 cmy_DNS = abs(uv2d) / (k2d * dudy) * omega_DNS
 cmy_DNS = np.nan_to_num(cmy_DNS, posinf=1, neginf=1)
@@ -169,7 +171,6 @@ cmy_DNS = np.nan_to_num(cmy_DNS, posinf=1, neginf=1)
 # omega = eps_DNS2d / k2d / 0.09
 # cmy_DNS = np.array(-uv2d / (k2d * (dudy + dvdx)) * omega)
 cmy_DNS[:, 0] = 1
-duidxj = np.array((dudx ** 2 + 0.5 * (dudy ** 2 + 2 * dudy * dvdx + dvdx ** 2) + dvdy ** 2) ** 0.5)
 filterx = duidxj > 15
 
 
@@ -222,7 +223,7 @@ Y = cmy_DNSS
 
 # Choose model
 
-model = SVR(kernel='rbf', C=100, epsilon=0.01)
+model = SVR(kernel='rbf', C=100, epsilon=0.001)
 SVR = model.fit(X, Y.flatten())
 
 print("Reading test case")
@@ -359,7 +360,8 @@ dvdy_2 = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
 print("Starting ML on new case")
 # ----------------------------------------------ML-Method Large Case----------------------------------------------
 # Calculate correct C_my for prediction
-vist_DNS_2 = abs(uv2d_2) / dudy_2
+duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
+vist_DNS_2 = abs(uv2d_2) / (dudx_2 + dvdx_2)
 omega_DNS_2 = (eps_DNS2d_2 / 0.09 / vist_DNS_2) ** 0.5
 cmy_DNS_2 = abs(uv2d_2) / (k_DNS2d * dudy_2) * omega_DNS_2
 cmy_DNS_2 = np.nan_to_num(cmy_DNS_2, posinf=1, neginf=1)
@@ -369,8 +371,6 @@ cmy_DNS_2 = np.nan_to_num(cmy_DNS_2, posinf=1, neginf=1)
 cmy_DNS_2[:, 0] = 1
 
 # np.array is used to convert the list to an array
-duidxj_test = np.array((dudx_2 ** 2 + 0.5 * (
-        dudy_2 ** 2 + 2 * dudy_2 * dvdx_2 + dvdx_2 ** 2) + dvdy_2 ** 2) ** 0.5)
 
 # Reshape data
 duidxj_test_reshape = duidxj_test.reshape(-1, 1)
@@ -413,16 +413,18 @@ errorOmega = (np.std(1 - cmy_DNS_2.flatten())) / (np.mean(1 ** 2)) ** 0.5
 
 predictOwnCase = SVR.predict(X)
 errorOwnCase = (np.std(predictOwnCase.flatten() - cmy_DNSS.flatten())) / (np.mean(predictOwnCase ** 2)) ** 0.5
+errorstdfirstcase = (np.std(1 - cmy_DNSS.flatten())) / (np.mean(1 ** 2)) ** 0.5
+
 
 # Print error
 print("------------------------------------")
-print("Coefficient of varience med ML är", errorML)
-print("Coefficient of varience med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
-print("Coefficient of varience in fitting case is", errorOwnCase)
+print("Coefficient of variance med ML är", errorML)
+print("Coefficient of variance med standardmodell ,k-omega, (C_my = 1) är", errorOmega)
+print("Coefficient of variance in fitting on own case is", errorOwnCase)
+print("Coefficient of variance med standardmodell, large wave", errorstdfirstcase)
 print("------------------------------------")
 # ----------------------------------------------Plot Cmy in domain----------------------------------------------
 jet = plt.get_cmap("jet")
-
 fig1, ax1 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
 fig1.colorbar(plt.contourf(xp2d, yp2d, cmy_DNS, levels=1000, cmap=jet), ax=ax1, label="$C_\mu$")
@@ -442,7 +444,7 @@ plt.ylabel("$y [m]$")
 
 fig3, ax3 = plt.subplots()
 plt.subplots_adjust(left=0.20, bottom=0.20)
-fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, levels=1000, cmap=jet), ax=ax3, label="$C_\mu$")
+fig3.colorbar(plt.contourf(xp2d_2, yp2d_2, y_svr, levels=20, cmap=jet), ax=ax3, label="$C_\mu$")
 plt.axis([0, 3.5, -0.4, 1])
 plt.title("Values of $C_\mu$ (Prediction) in the area $[x_0,x_n]$ x $[y_0,y_n]$")
 plt.xlabel("$x [m]$")
