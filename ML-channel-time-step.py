@@ -193,7 +193,6 @@ plt.axis([0, 2000, 0,0.6])
 plt.legend(loc="best",fontsize=14)
 plt.savefig('rime-scale-DNS-and-non-liner.png',bbox_inches='tight')
 
-sys.exit()
 
 # vist and diss of k-omega model agree well with DNS, but not k. Hence omega is taken from diss and vist
 # vist = cmu*k**2/eps
