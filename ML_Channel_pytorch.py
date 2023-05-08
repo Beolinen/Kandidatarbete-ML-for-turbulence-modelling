@@ -11,8 +11,6 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.discriminant_analysis import StandardScaler
-from random import randrange
-import sys
 
 #----------------Parameters----------------
 #Ignore matplotlib deprecation warnings in output
@@ -91,14 +89,12 @@ tau_peng=k_peng/eps_peng
 # interpolate to DNS grid
 tau_peng_DNS=np.interp(y_DNS, y_rans, tau_peng)
 
-
 tau_DNS = k_DNS/eps_DNS
 
 # dont train on, uu, vv, ww, uv, uw, vw 
 # Maybe mixed terms are ok (just not uu,vv,ww)
 
 #-----------------Data_manipulation--------------------
-
 # Delete first value for all interesting data
 # uv_DNS = np.delete(uv_DNS, 0)
 # vv_DNS = np.delete(vv_DNS, 0)
@@ -114,7 +110,7 @@ tau_DNS = k_DNS/eps_DNS
 # tau_akn_DNS = np.delete(tau_akn_DNS,0)
 # tau_rans_DNS = np.delete(tau_rans_DNS,0)
 # tau_peng_DNS = np.delete(tau_peng_DNS,0)
-#print(yplus_DNS[6])
+
 uv_DNS = uv_DNS[10:-1:]
 vv_DNS = vv_DNS[10:-1:]
 ww_DNS = ww_DNS[10:-1:]
@@ -152,7 +148,6 @@ c_0_PENG = -6*(ww_DNS/k_DNS - 2/3)/(tau_peng_DNS**2*dudy_DNS**2)
 c_2_PENG = ((ww_DNS/k_DNS - 2/3) + 2*(uu_DNS/k_DNS - 2/3))/(tau_peng_DNS**2*dudy_DNS**2)
 
 
-
 def reshape_those_fuckers(*args):
     return [arg.reshape(-1,1) for arg in args]
 
@@ -163,11 +158,9 @@ dudy_squared_DNS_scaled = StandardScaler().fit_transform(dudy_squared_DNS)
 dudy_DNS_scaled = StandardScaler().fit_transform(dudy_DNS)
 X = np.concatenate((dudy_DNS,dudy_squared_DNS_scaled),axis=1)
 
-
 # transpose the target vector to make it a column vector  
 c = np.array([c_0_DNS,c_2_DNS])
 y = c.transpose()
-
 
 #tau, dudy, k, uu, vv, ww, yplus_DNS
 test_var = np.concatenate((reshape_those_fuckers(tau_DNS,dudy_DNS,k_DNS,uu_DNS,vv_DNS,ww_DNS,yplus_DNS, c[0,:],c[1,:])),axis=1)
@@ -196,6 +189,7 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
+
 class ThePredictionMachine(nn.Module):
 
     def __init__(self):
@@ -204,17 +198,18 @@ class ThePredictionMachine(nn.Module):
 
         self.input   = nn.Linear(2, 50)     
         self.hidden1 = nn.Linear(50, 25) 
-        self.hidden_1 = nn.Linear(25,25)
-        self.hidden_2 = nn.Linear(25,25)
+        # self.hidden_1 = nn.Linear(25,25)
+        # self.hidden_2 = nn.Linear(25,25)
         self.hidden2 = nn.Linear(25, 2)     
 
     def forward(self, x):
         x = nn.functional.relu(self.input(x))
         x = nn.functional.relu(self.hidden1(x))
-        x = nn.functional.relu(self.hidden_1(x))
-        x = nn.functional.relu(self.hidden_2(x))
+        # x = nn.functional.relu(self.hidden_1(x))
+        # x = nn.functional.relu(self.hidden_2(x))
         x = self.hidden2(x)
         return x
+
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -257,7 +252,6 @@ loss_fn = nn.MSELoss()
 # In this case we choose Stocastic Gradient Descent
 optimizer = torch.optim.SGD(neural_net.parameters(), lr=learning_rate)
 
-
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_loader, neural_net, loss_fn, optimizer)
@@ -270,7 +264,7 @@ c_NN = preds.detach().numpy()
 print(f"Mean of c_0 from neural network {np.mean(c_NN[:,0])}")
 print(f"Mean of c_2 from neural network {np.mean(c_NN[:,1])}")
 
-torch.save(neural_net, "trained_models/nn_model_c0_c2.pt")
+torch.save(neural_net, "trained_models/nn_model_c0_c2_other.pt")
 ww_tau_DNS = ((c_0_DNS)*(tau_DNS**2*dudy_DNS**2)/(-6) + 2/3)*k_DNS
 uu_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) + 6*(c_2_DNS)) + 2/3)*k_DNS
 vv_tau_DNS = ((1/12)*tau_DNS**2*dudy_DNS**2*((c_0_DNS) - 6*(c_2_DNS)) + 2/3)*k_DNS
@@ -299,14 +293,12 @@ ww_const = ((c0)*(test_var_val[:,0]**2*test_var_val[:,1]**2)/(-6) + 2/3)*test_va
 uu_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) + 6*(c2)) + 2/3)*test_var_val[:,2]
 vv_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) - 6*(c2)) + 2/3)*test_var_val[:,2]
 
-
 c0 = np.mean(c_NN[:,0])
 c2 = np.mean(c_NN[:,1])
 
 ww_NN_const = ((c0)*(test_var_val[:,0]**2*test_var_val[:,1]**2)/(-6) + 2/3)*test_var_val[:,2]
 uu_NN_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) + 6*(c2)) + 2/3)*test_var_val[:,2]
 vv_NN_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) - 6*(c2)) + 2/3)*test_var_val[:,2]
-
 
 #-----------------Plotting--------------------
 fig1, (ax0,ax1,ax2)= plt.subplots(nrows = 3 ,ncols = 1, sharex = True, figsize = (12,6))

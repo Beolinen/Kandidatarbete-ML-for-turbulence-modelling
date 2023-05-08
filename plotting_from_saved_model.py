@@ -403,9 +403,10 @@ vv_const = ((1/12)*tau_DNS**2*dudy_DNS**2*((c0) - 6*(c2)) + 2/3)*k_DNS
 fig3 = plt.figure()
 plt.scatter(c_0_DNS,yplus_DNS,s = 15, marker = "o",color = "r",label = "DNS")
 plt.scatter(c_NN[:,0],yplus_DNS,s = 10,marker = "+", color = "k" ,alpha = 0.5,label = "NN test")
-plt.axis([0,1,0,7000])
-plt.xlabel("$\overline{u'u'}$")
+plt.axis([0,1000,0,7000])
+plt.xlabel("$c_0$")
 plt.ylabel("$y^+$")
+plt.legend(loc = "best", fontsize = 12)
 plt.title("Test of trained model")
 
 
