@@ -441,4 +441,20 @@ axins1.set_xticks([0,0.05,0.1])
 plt.xlabel("$c_2$")
 plt.savefig("plots/c_2_test.png")
 
-plt.show()
+#plt.show()
+
+errorWW_NN = (np.std(ww_NN - ww_DNS)) / (np.mean(ww_NN ** 2)) ** 0.5
+errorVV_NN = (np.std(vv_NN - vv_DNS)) / (np.mean(vv_NN ** 2)) ** 0.5
+errorUU_NN = (np.std(uu_NN - uu_DNS)) / (np.mean(uu_NN ** 2)) ** 0.5
+
+errorWW_C = (np.std(ww_const - ww_DNS)) / (np.mean(ww_const ** 2)) ** 0.5
+errorVV_C = (np.std(vv_const - vv_DNS)) / (np.mean(vv_const ** 2)) ** 0.5
+errorUU_C = (np.std(uu_const - uu_DNS)) / (np.mean(uu_const ** 2)) ** 0.5
+
+print("errorWW_NN =", errorWW_NN)
+print("errorVV_NN =", errorVV_NN)
+print("errorUU_NN =", errorUU_NN)
+
+print("errorWW_C =", errorWW_C)
+print("errorVV_C =", errorVV_C)
+print("errorUU_C =", errorUU_C)
