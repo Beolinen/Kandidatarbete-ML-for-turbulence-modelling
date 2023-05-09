@@ -195,7 +195,6 @@ random_state = 90
 
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2,random_state= random_state)
 X_train, X_val, test_var_train, test_var_val = train_test_split(X, test_var, test_size=0.2,random_state= random_state)
-
 # convert the numpy arrays to PyTorch tensors with float32 data type
 X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
 y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
@@ -260,7 +259,6 @@ def test_loop(dataloader, model, loss_fn):
 model = torch.load("trained_models/nn_model_c0_c2.pt")
 preds = model(X_val_tensor)
 c_NN = preds.detach().numpy()
-
 #tau, dudy, k, uu, vv, ww, yplus, c_0,c_2
 ww_NN = ((c_NN[:,0])*(test_var_val[:,0]**2*test_var_val[:,1]**2)/(-6) + 2/3)*test_var_val[:,2]
 uu_NN = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c_NN[:,0]) + 6*(c_NN[:,1])) + 2/3)*test_var_val[:,2]
@@ -335,7 +333,43 @@ vv_NN_const = ((1/12)*test_var_val[:,0]**2*test_var_val[:,1]**2*((c0) - 6*(c2)) 
 # ax4.set_ylabel("$y^+$")
 # ax4.legend(loc = "best", fontsize = 12)
 # fig2.savefig("plots/c_approximation_NN.png")
+filterWW = ww_NN > 0
+filterWWC = ww_const > -0.5
+ww_NN = ww_NN[filterWW]
+ww_const = ww_const[filterWWC]
+www = test_var_val[:,5]
 
+
+filterVV = vv_NN > 0 
+filterVVC = vv_const > -2
+vv_NN = vv_NN[filterVV]
+vv_const = vv_const[filterVVC]
+vvv = test_var_val[:,4]
+
+
+filterUU = uu_NN < 17
+filterUUC = uu_const < 17
+uu_NN = uu_NN[filterUU]
+uu_const = uu_const[filterUUC]
+uuu = test_var_val[:,3]
+
+
+
+errorWW_NN = (np.std(ww_NN - www[filterWW])) / (np.mean(ww_NN ** 2)) ** 0.5
+errorVV_NN = (np.std(vv_NN - vvv[filterVV])) / (np.mean(vv_NN ** 2)) ** 0.5
+errorUU_NN = (np.std(uu_NN - uuu[filterUU])) / (np.mean(uu_NN ** 2)) ** 0.5
+
+errorWW_C = (np.std(ww_const - www[filterWWC])) / (np.mean(ww_const ** 2)) ** 0.5
+errorVV_C = (np.std(vv_const - vvv[filterVVC])) / (np.mean(vv_const ** 2)) ** 0.5
+errorUU_C = (np.std(uu_const - uuu[filterUUC])) / (np.mean(uu_const ** 2)) ** 0.5
+
+print("errorWW_NN =", errorWW_NN)
+print("errorVV_NN =", errorVV_NN)
+print("errorUU_NN =", errorUU_NN)
+
+print("errorWW_C =", errorWW_C)
+print("errorVV_C =", errorVV_C)
+print("errorUU_C =", errorUU_C)
 #------------------------TEST WITH NEW DATA--------------------
 DNS_mean=np.genfromtxt("vel_11000_DNS.dat",comments="%")
 y_DNS=DNS_mean[:,0]
@@ -443,18 +477,4 @@ plt.savefig("plots/c_2_test.png")
 
 #plt.show()
 
-errorWW_NN = (np.std(ww_NN - ww_DNS)) / (np.mean(ww_NN ** 2)) ** 0.5
-errorVV_NN = (np.std(vv_NN - vv_DNS)) / (np.mean(vv_NN ** 2)) ** 0.5
-errorUU_NN = (np.std(uu_NN - uu_DNS)) / (np.mean(uu_NN ** 2)) ** 0.5
 
-errorWW_C = (np.std(ww_const - ww_DNS)) / (np.mean(ww_const ** 2)) ** 0.5
-errorVV_C = (np.std(vv_const - vv_DNS)) / (np.mean(vv_const ** 2)) ** 0.5
-errorUU_C = (np.std(uu_const - uu_DNS)) / (np.mean(uu_const ** 2)) ** 0.5
-
-print("errorWW_NN =", errorWW_NN)
-print("errorVV_NN =", errorVV_NN)
-print("errorUU_NN =", errorUU_NN)
-
-print("errorWW_C =", errorWW_C)
-print("errorVV_C =", errorVV_C)
-print("errorUU_C =", errorUU_C)
