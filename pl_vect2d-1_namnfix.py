@@ -97,8 +97,8 @@ xf2d = np.transpose(xf2d)
 yf2d = np.transpose(yf2d)
 
 # compute cell centers
-xp2d = 0.25 * (xf2d[0:-1, 0:-1] + xf2d[0:-1, 1:] + xf2d[1:, 0:-1] + xf2d[1:, 1:])  # Borde vara yf2d och xf2d
-yp2d = 0.25 * (yf2d[0:-1, 0:-1] + yf2d[0:-1, 1:] + yf2d[1:, 0:-1] + yf2d[1:, 1:])  # Borde vara yf2d och xf2d
+xp2d = 0.25 * (xf2d[0:-1, 0:-1] + xf2d[0:-1, 1:] + xf2d[1:, 0:-1] + xf2d[1:, 1:])
+yp2d = 0.25 * (yf2d[0:-1, 0:-1] + yf2d[0:-1, 1:] + yf2d[1:, 0:-1] + yf2d[1:, 1:])  
 
 # compute geometric quantities
 areaw, areawx, areawy, areas, areasx, areasy, vol, fx, fy = init(xf2d, yf2d, xp2d, yp2d)
@@ -164,6 +164,17 @@ dvdx = dphidx(v2d_face_w, v2d_face_s, areawx, areasx, vol)
 # y derivatives
 dudy = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
 dvdy = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
+
+# # Plot mesh plot
+# plt.figure()
+# plt.plot(x2d.T, y2d.T, 'k-', linewidth=0.2)  # Horizontal lines
+# plt.plot(x2d, y2d, 'k-', linewidth=0.2)  # Vertical lines
+# plt.title('Visualisering av rutnät')
+# plt.xlabel('X')
+# plt.ylabel('Y')
+# plt.show()
+# sys.exit()
+
 
 print("Data read")
 print("Starting ML")
@@ -348,6 +359,16 @@ dvdx_2 = dphidx(v2d_face_w, v2d_face_s, areawx, areasx, vol)
 # y derivatives
 dudy_2 = dphidy(u2d_face_w, u2d_face_s, areawy, areasy, vol)
 dvdy_2 = dphidy(v2d_face_w, v2d_face_s, areawy, areasy, vol)
+
+# # Plot mesh plot
+# plt.figure()
+# plt.plot(x2d_2.T, y2d_2.T, 'k-', linewidth=0.2)  # Horizontal lines
+# plt.plot(x2d_2, y2d_2, 'k-', linewidth=0.2)  # Vertical lines
+# plt.title('Visualisering av rutnät')
+# plt.xlabel('X')
+# plt.ylabel('Y')
+# plt.show()
+# sys.exit()
 
 print("Starting ML new case")
 # ----------------------------------------------ML-Method Large Case----------------------------------------------
